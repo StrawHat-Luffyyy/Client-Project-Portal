@@ -1,6 +1,7 @@
 import { createApp } from './app.js';
 import { env } from './config/env.js';
 import { logger } from './lib/logger.js';
+import { prisma } from './lib/prisma.js';
 
 const app = createApp();
 
@@ -15,6 +16,7 @@ function shutdown(signal: string) {
       logger.error({ error }, 'Failed to close API server');
       process.exitCode = 1;
     }
+    void prisma.$disconnect();
   });
 }
 

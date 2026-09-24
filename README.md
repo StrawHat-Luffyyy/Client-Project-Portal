@@ -4,7 +4,7 @@ A production-style, multi-tenant project operations portal for clients, project 
 
 ## Status
 
-Phase 1 (foundation) is complete. Authentication and protected product workflows are not implemented yet; see `PROJECT_STATE.md`.
+Phase 2 is complete: the foundation, authentication, invitations, RBAC, CSRF protection, and centralized tenant scope are implemented. Client/project workflows begin in Phase 3; see `PROJECT_STATE.md`.
 
 ## Architecture
 
@@ -46,17 +46,19 @@ Alternatively, start the complete container stack with `docker compose up --buil
 
 ## Environment variables
 
-| Variable                  | Purpose                                    |
-| ------------------------- | ------------------------------------------ |
-| `DATABASE_URL`            | PostgreSQL connection used by Prisma       |
-| `API_PORT`                | Express listen port; defaults to `4000`    |
-| `WEB_ORIGIN`              | Allowed credentialed browser origin        |
-| `NEXT_PUBLIC_API_URL`     | Browser-visible API base URL               |
-| `JWT_SECRET`              | Access-token signing secret (phase 2)      |
-| `CSRF_SECRET`             | CSRF-token secret (phase 2)                |
-| `ATTACHMENT_STORAGE`      | `local` in development, `s3` in production |
-| `UPLOAD_DIRECTORY`        | Local attachment directory                 |
-| `AWS_REGION`, `S3_BUCKET` | Production attachment storage settings     |
+| Variable                  | Purpose                                     |
+| ------------------------- | ------------------------------------------- |
+| `DATABASE_URL`            | PostgreSQL connection used by Prisma        |
+| `API_PORT`                | Express listen port; defaults to `4000`     |
+| `WEB_ORIGIN`              | Allowed credentialed browser origin         |
+| `NEXT_PUBLIC_API_URL`     | Browser-visible API base URL                |
+| `JWT_SECRET`              | Access-token signing secret (phase 2)       |
+| `CSRF_SECRET`             | CSRF-token secret (phase 2)                 |
+| `JWT_EXPIRES_IN_SECONDS`  | Access-cookie lifetime; defaults to 8 hours |
+| `COOKIE_SECURE`           | Secure-cookie override for local HTTP only  |
+| `ATTACHMENT_STORAGE`      | `local` in development, `s3` in production  |
+| `UPLOAD_DIRECTORY`        | Local attachment directory                  |
+| `AWS_REGION`, `S3_BUCKET` | Production attachment storage settings      |
 
 Never commit a populated `.env` file.
 
@@ -73,7 +75,20 @@ pnpm db:seed
 
 ## API overview
 
-All endpoints use `/api/v1`. Phase 1 exposes `GET /health` and a consistent error envelope. Auth, clients/projects, requirements, tasks, comments, activity, notifications, and SSE endpoints are delivered in subsequent phases from `PROJECT_BRIEF.md`.
+All endpoints use `/api/v1` and the standard error envelope.
+
+| Method | Endpoint                 | Purpose                                            |
+| ------ | ------------------------ | -------------------------------------------------- |
+| GET    | `/health`                | Service health                                     |
+| GET    | `/auth/csrf`             | Issue a signed double-submit CSRF token            |
+| POST   | `/auth/register-org`     | Create an organization and its ADMIN               |
+| POST   | `/auth/login`            | Authenticate and set the JWT cookie                |
+| POST   | `/auth/logout`           | Clear authentication cookies                       |
+| GET    | `/auth/me`               | Return the authenticated server-derived user scope |
+| POST   | `/invites`               | Create an invitation; ADMIN only                   |
+| POST   | `/invites/:token/accept` | Accept a one-time invitation                       |
+
+State-changing requests require the CSRF token from `/auth/csrf` in the `x-csrf-token` header. Browser requests must include credentials. Remaining domain endpoints follow in later phases.
 
 ## Demo credentials
 
@@ -86,7 +101,7 @@ The seed creates these planned phase-2 accounts with password `DemoPass123!`:
 | ENGINEER | `engineer@demo.local` |
 | CLIENT   | `client@demo.local`   |
 
-Login is available after phase 2.
+These accounts can sign in at `/login`.
 
 ## Demo workflow
 

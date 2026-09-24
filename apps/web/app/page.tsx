@@ -36,8 +36,19 @@ export default function HomePage() {
             A secure workspace for clients, project managers, and engineers to
             align on requirements, delivery, and progress.
           </p>
-          <div className="mt-9 inline-flex min-h-11 items-center rounded-md bg-blue-600 px-5 py-3 text-sm font-semibold text-white shadow-sm">
-            Foundation ready
+          <div className="mt-9 flex flex-wrap gap-3">
+            <Link
+              className="inline-flex min-h-11 cursor-pointer items-center rounded-md bg-blue-600 px-5 py-3 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-blue-700"
+              href="/login"
+            >
+              Sign in
+            </Link>
+            <Link
+              className="inline-flex min-h-11 cursor-pointer items-center rounded-md border border-slate-300 bg-white px-5 py-3 text-sm font-semibold text-slate-800 transition-colors hover:bg-slate-50"
+              href="/register"
+            >
+              Create organization
+            </Link>
           </div>
         </div>
 
@@ -84,3 +95,4 @@ export default function HomePage() {
     </main>
   );
 }
+import Link from 'next/link';

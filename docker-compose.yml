@@ -21,7 +21,10 @@ services:
       dockerfile: apps/api/Dockerfile
     environment:
       API_PORT: 4000
+      COOKIE_SECURE: 'false'
+      CSRF_SECRET: local-docker-csrf-secret-change-before-production
       DATABASE_URL: postgresql://portal:portal@postgres:5432/client_portal?schema=public
+      JWT_SECRET: local-docker-jwt-secret-change-before-production
       NODE_ENV: production
       WEB_ORIGIN: http://localhost:3000
     command:
