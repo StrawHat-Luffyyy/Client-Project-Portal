@@ -31,8 +31,16 @@ Completed on 2026-09-24:
 - `pnpm build` — passed for shared, API, and web packages
 - `pnpm format:check` — passed
 - `docker compose config --quiet` — passed
+- Docker images for API and web — built successfully
+- Docker Compose stack — started successfully
+- PostgreSQL health check — passed
+- initial migration applied successfully to PostgreSQL 17
+- idempotent seed executed twice successfully
+- seed counts verified: 1 organization, 2 clients, 4 users, 2 projects, 2 requirements, and 1 task
+- API container health check and `GET /api/v1/health` — passed
+- web container smoke request — HTTP 200 with expected portal content
 
-Environment limitation: the Docker Desktop engine was not running, so the PostgreSQL container, migration application, and seed execution could not be exercised against a live database. The Compose model itself validated successfully. This must be run before phase 2 database-backed integration verification.
+The verification containers and network were removed after testing. The PostgreSQL volume was preserved for local development.
 
 ## Next phase
 
