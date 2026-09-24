@@ -4,7 +4,7 @@ Last updated: 2026-09-24
 
 ## Current phase
 
-Phase 4 — Requirement triage and activity history: implementation complete; live Docker verification pending host recovery.
+Phase 4 — Requirement triage and activity history: complete.
 
 ## Completed
 
@@ -92,9 +92,17 @@ Completed on 2026-09-24:
 - PM transition-policy unit tests — passed for every requirement status
 - triage API tests — passed for RBAC, required reasons, invalid transitions, terminal rejection, activity ordering, and tenant/client isolation
 - Phase 4 requirement UI production build — passed
+- Phase 4 API and web images — built and unpacked successfully in Docker Desktop
+- live Phase 4 Compose stack — PostgreSQL and API healthy; requirement page returned HTTP 200
+- live CLIENT requirement submission — created in `SUBMITTED`
+- live CLIENT transition attempt — rejected with HTTP 403
+- live invalid PM transition — rejected with HTTP 409 and the consistent transition error
+- live PM triage workflow — `SUBMITTED -> IN_REVIEW -> NEEDS_INFO -> IN_REVIEW -> APPROVED`
+- live request-information reason — visible to the scoped CLIENT in requirement activity
+- live requirement status and five immutable activity rows — verified in PostgreSQL
 
-Phase 4 live Compose verification is pending Docker Desktop host recovery. The image build reached dependency installation, then BuildKit disconnected with `EOF`; Docker's WSL distribution subsequently stopped and failed to bootstrap with `0xc00000fd`. A controlled Docker Desktop restart and WSL shutdown/relaunch did not restore the engine. Named PostgreSQL and attachment volumes were not removed.
+The Docker host recovered and Phase 4 live verification is complete. Named PostgreSQL and attachment volumes remain preserved for local development.
 
 ## Next phase
 
-Phase 5 — task breakdown and the Kanban task board, after Phase 4 live Compose verification is completed.
+Phase 5 — task breakdown and the Kanban task board.

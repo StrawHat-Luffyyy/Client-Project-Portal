@@ -4,7 +4,7 @@ A production-style, multi-tenant project operations portal for clients, project 
 
 ## Status
 
-Phase 4 implementation is complete: PMs can triage requirements through validated transitions with required explanations, while clients and internal users can inspect the tenant-scoped immutable activity history. The local quality gate passes; live Compose verification is pending Docker Desktop host recovery. See `PROJECT_STATE.md`.
+Phase 4 is complete and verified locally with Docker Compose: PMs can triage requirements through validated transitions with required explanations, while clients and internal users can inspect the tenant-scoped immutable activity history. Task breakdown begins in Phase 5; see `PROJECT_STATE.md`.
 
 ## Architecture
 
