@@ -4,7 +4,7 @@ A production-style, multi-tenant project operations portal for clients, project 
 
 ## Status
 
-Phase 4 is complete and verified locally with Docker Compose: PMs can triage requirements through validated transitions with required explanations, while clients and internal users can inspect the tenant-scoped immutable activity history. Task breakdown begins in Phase 5; see `PROJECT_STATE.md`.
+Phase 5 is complete and verified locally with Docker Compose: PMs can break approved requirements into assigned tasks, engineers can advance their work on the Kanban board, the first task start automatically starts its requirement, and PM delivery confirmation is blocked until every task is done. See `PROJECT_STATE.md`.
 
 ## Architecture
 
@@ -94,6 +94,11 @@ All endpoints use `/api/v1` and the standard error envelope.
 | GET/PATCH | `/requirements/:id`            | Read or edit eligible submitted content            |
 | POST      | `/requirements/:id/transition` | Apply a validated PM triage transition             |
 | GET       | `/requirements/:id/activity`   | Read paginated, tenant-scoped requirement activity |
+| GET/POST  | `/requirements/:id/tasks`      | List scoped tasks or create a PM task breakdown    |
+| GET       | `/tasks`                       | List the PM/ENGINEER task board with filters       |
+| GET       | `/tasks/assignees`             | List organization engineers for PM assignment      |
+| PATCH     | `/tasks/:id`                   | Edit a `TODO` task as PM                           |
+| POST      | `/tasks/:id/move`              | Apply the next validated task status               |
 
 State-changing requests require the CSRF token from `/auth/csrf` in the `x-csrf-token` header. Browser requests must include credentials. Requirement creation accepts `multipart/form-data` with an optional `attachment` field; supported files are PDF, Word, text, PNG, and JPEG up to 10 MB.
 
@@ -113,10 +118,13 @@ These accounts can sign in at `/login`.
 ## Demo workflow
 
 1. Sign in as the CLIENT and submit a requirement from one of its projects.
-2. Sign in as the PM, open the requirement, move it into review, and request information or approve/reject it.
-3. Sign back in as the CLIENT to see the new status, any supplied explanation, and the activity timeline.
+2. Sign in as the PM, open the requirement, move it into review, and approve it.
+3. On the approved requirement, create one or more tasks with an engineer, estimate, and due date.
+4. Sign in as the ENGINEER, open `/board`, and move each assigned task through `TODO`, `IN_PROGRESS`, `IN_REVIEW`, and `DONE`.
+5. Sign back in as the PM and confirm delivery after all tasks are done.
+6. Sign in as the CLIENT to see the delivered requirement, task summary, and activity timeline.
 
-The current workflow supports: ADMIN/PM creates a client and project → ADMIN invites a client user → CLIENT submits a requirement with an optional attachment → PM reviews, requests information, approves, or rejects it → CLIENT sees the decision and activity history. Subsequent phases add tasks, comments, and live delivery status. The seed data includes two client accounts to support isolation testing.
+The current workflow supports: ADMIN/PM creates a client and project → ADMIN invites a client user → CLIENT submits a requirement with an optional attachment → PM reviews and approves or rejects it → PM creates an assigned task breakdown → ENGINEER advances assigned tasks on the board → PM confirms delivery once all work is done → CLIENT sees task progress and activity history. Subsequent phases add comments and live updates. The seed data includes two client accounts to support isolation testing.
 
 ## Deployment summary
 
@@ -129,4 +137,6 @@ Local development uses Docker Compose. The production target is ECS Fargate, RDS
 - Global unique email: matches the source model and makes tenant discovery during login unnecessary.
 - Local storage is implemented behind an attachment-storage interface for development and Compose. The S3 adapter is bound during the deployment phase without changing requirement services.
 - Request-information and rejection transitions require a reason and expose it in the activity timeline. This keeps client follow-up actionable; only rejection also persists the reason on the requirement itself.
+- Task status changes are forward-only and use a native dropdown on the board. This provides the brief's required status-change workflow with dependable keyboard access and without adding a drag-and-drop dependency.
+- Task creation requires a UUID idempotency key and is unique within an organization, preventing duplicate tasks from retries or double submissions.
 - No speculative event bus or cache: PostgreSQL-backed workflows come first; scaling mechanisms will be added only if required.

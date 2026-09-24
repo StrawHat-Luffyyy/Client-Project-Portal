@@ -141,6 +141,10 @@ export interface WorkspaceRepository {
     requirementId: string,
     pagination: PaginationQuery,
   ): Promise<Page<RequirementActivityRecord> | null>;
+  canDeliverRequirement(
+    scope: AuthenticatedScope,
+    requirementId: string,
+  ): Promise<boolean>;
 }
 
 export interface UploadedFile {

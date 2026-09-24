@@ -11,6 +11,7 @@ import { meResponseSchema } from '../../lib/workspace-api';
 
 const dashboardNavItem = { href: '/dashboard', label: 'Dashboard' } as const;
 const projectsNavItem = { href: '/projects', label: 'Projects' } as const;
+const boardNavItem = { href: '/board', label: 'Task board' } as const;
 
 export function useCurrentUser() {
   return useQuery({
@@ -48,6 +49,7 @@ export function WorkspaceShell({
   const navigation = [
     dashboardNavItem,
     ...(user.role === 'ENGINEER' ? [] : [projectsNavItem]),
+    ...(user.role === 'PM' || user.role === 'ENGINEER' ? [boardNavItem] : []),
     ...(user.role === 'ADMIN' || user.role === 'PM'
       ? [{ href: '/admin', label: 'Clients & team' }]
       : []),

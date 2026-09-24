@@ -28,6 +28,7 @@ import {
   AuthenticatedScreen,
   WorkspaceShell,
 } from '../../../components/workspace/workspace-shell';
+import { RequirementTasks } from '../../../components/workspace/requirement-tasks';
 import { apiRequest } from '../../../lib/api-client';
 import {
   requirementActivityResponseSchema,
@@ -38,6 +39,7 @@ const pmTransitions: Partial<Record<RequirementStatus, RequirementStatus[]>> = {
   SUBMITTED: ['IN_REVIEW'],
   IN_REVIEW: ['NEEDS_INFO', 'APPROVED', 'REJECTED'],
   NEEDS_INFO: ['IN_REVIEW'],
+  IN_PROGRESS: ['DELIVERED'],
 };
 const noTransitions: RequirementStatus[] = [];
 
@@ -50,6 +52,20 @@ function activityTitle(activity: RequirementActivity) {
     return 'Requirement submitted';
   if (activity.action === 'REQUIREMENT_UPDATED')
     return 'Requirement details updated';
+  if (activity.action === 'TASK_CREATED') {
+    const title = activity.metadata.title;
+    return typeof title === 'string'
+      ? `Task created: ${title}`
+      : 'Task created';
+  }
+  if (activity.action === 'TASK_UPDATED') return 'Task details updated';
+  if (activity.action === 'TASK_STATUS_CHANGED') {
+    const from = activity.metadata.from;
+    const to = activity.metadata.to;
+    if (typeof from === 'string' && typeof to === 'string') {
+      return `Task moved from ${from.toLowerCase().replaceAll('_', ' ')} to ${to.toLowerCase().replaceAll('_', ' ')}`;
+    }
+  }
   if (activity.action === 'REQUIREMENT_STATUS_CHANGED') {
     const from = activity.metadata.from;
     const to = activity.metadata.to;
@@ -295,6 +311,11 @@ function RequirementContent({
             </div>
           ) : null}
         </section>
+        <RequirementTasks
+          requirementId={requirementId}
+          requirementStatus={requirement.data.status}
+          user={user}
+        />
         <ActivityTimeline requirementId={requirementId} />
       </div>
       <aside className="space-y-6">

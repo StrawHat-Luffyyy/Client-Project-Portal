@@ -410,4 +410,34 @@ export class PrismaWorkspaceRepository implements WorkspaceRepository {
       total,
     );
   }
+
+  async canDeliverRequirement(
+    scope: AuthenticatedScope,
+    requirementId: string,
+  ) {
+    const [total, incomplete] = await this.database.$transaction([
+      this.database.task.count({
+        where: {
+          organizationId: scope.organizationId,
+          requirementId,
+          requirement: {
+            organizationId: scope.organizationId,
+            status: 'IN_PROGRESS',
+          },
+        },
+      }),
+      this.database.task.count({
+        where: {
+          organizationId: scope.organizationId,
+          requirementId,
+          status: { not: 'DONE' },
+          requirement: {
+            organizationId: scope.organizationId,
+            status: 'IN_PROGRESS',
+          },
+        },
+      }),
+    ]);
+    return total > 0 && incomplete === 0;
+  }
 }

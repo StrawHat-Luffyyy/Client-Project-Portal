@@ -128,6 +128,16 @@ export class WorkspaceService {
   ) {
     const existing = await this.getRequirement(scope, requirementId);
     assertPmRequirementTransition(existing.status, input);
+    if (
+      input.to === 'DELIVERED' &&
+      !(await this.repository.canDeliverRequirement(scope, requirementId))
+    ) {
+      throw new AppError(
+        409,
+        'REQUIREMENT_NOT_DELIVERABLE',
+        'Delivery can only be confirmed after every task is done.',
+      );
+    }
     const requirement = await this.repository.transitionRequirement(
       scope,
       requirementId,

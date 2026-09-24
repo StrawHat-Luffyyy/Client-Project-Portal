@@ -11,6 +11,7 @@ const pmTransitions: Readonly<
   SUBMITTED: ['IN_REVIEW'],
   IN_REVIEW: ['NEEDS_INFO', 'APPROVED', 'REJECTED'],
   NEEDS_INFO: ['IN_REVIEW'],
+  IN_PROGRESS: ['DELIVERED'],
 };
 
 export function allowedPmRequirementTransitions(

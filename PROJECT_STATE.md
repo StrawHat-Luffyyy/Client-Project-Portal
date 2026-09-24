@@ -4,7 +4,7 @@ Last updated: 2026-09-24
 
 ## Current phase
 
-Phase 4 — Requirement triage and activity history: complete.
+Phase 5 — Task breakdown and Kanban task board: complete.
 
 ## Completed
 
@@ -38,6 +38,15 @@ Phase 4 — Requirement triage and activity history: complete.
 - tenant- and client-scoped paginated requirement activity API
 - role-aware PM triage controls and requirement activity timeline
 - rejection explanations surfaced on requirement details
+- PM-only task breakdown for approved requirements with assignee, estimate, and due date
+- idempotent task creation with tenant-scoped database uniqueness
+- forward-only task transitions through `TODO`, `IN_PROGRESS`, `IN_REVIEW`, and `DONE`
+- assigned-engineer task isolation and organization-wide PM board access
+- automatic requirement start when its first task enters progress
+- PM delivery confirmation gated on every task being done
+- tenant/client-scoped task summaries on requirement details
+- responsive PM/ENGINEER board with project and assignee filtering
+- transactional task and automatic requirement activity entries
 
 ## Verification
 
@@ -100,9 +109,29 @@ Completed on 2026-09-24:
 - live PM triage workflow — `SUBMITTED -> IN_REVIEW -> NEEDS_INFO -> IN_REVIEW -> APPROVED`
 - live request-information reason — visible to the scoped CLIENT in requirement activity
 - live requirement status and five immutable activity rows — verified in PostgreSQL
+- `pnpm typecheck` — passed after Phase 5
+- `pnpm lint` — passed after Phase 5
+- `pnpm test` — passed with 38 API tests after Phase 5
+- `pnpm build` — passed for shared, API, and web packages after Phase 5, including `/board`
+- Prisma schema generation and validation — passed after adding task idempotency
+- task transition-policy unit tests — passed for the complete forward-only state sequence
+- task API tests — passed for RBAC, assignment scope, tenant/client isolation, idempotency, invalid transitions, automatic requirement start, delivery gating, filtering, and activity logging
+- Phase 5 API and web images — built successfully in Docker Desktop
+- live Phase 5 Compose stack — PostgreSQL and API healthy; board and requirement routes returned HTTP 200
+- live CLIENT submission and PM approval — passed
+- live PM task breakdown — created two assigned tasks with estimates and due dates
+- live duplicate task retry — returned the original task and persisted exactly two tasks
+- live CLIENT board access — rejected with HTTP 403 while scoped requirement tasks remained visible
+- live assigned ENGINEER board — contained both assigned tasks
+- live skipped task transition — rejected with HTTP 409
+- live first task start — automatically changed the requirement to `IN_PROGRESS`
+- live premature PM delivery confirmation — rejected with HTTP 409
+- live task workflow — both tasks advanced through every status to `DONE`
+- live PM delivery confirmation — changed the requirement to `DELIVERED`
+- task idempotency migration, final task rows, assignees, and 13 immutable activity rows — verified in PostgreSQL
 
-The Docker host recovered and Phase 4 live verification is complete. Named PostgreSQL and attachment volumes remain preserved for local development.
+Phase 5 live verification is complete. Named PostgreSQL and attachment volumes remain preserved for local development.
 
 ## Next phase
 
-Phase 5 — task breakdown and the Kanban task board.
+Phase 6 — comments with internal and client-visible visibility rules.

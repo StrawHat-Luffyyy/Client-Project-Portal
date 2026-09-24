@@ -12,7 +12,7 @@ describe('requirement transition policy', () => {
     ['IN_REVIEW', ['NEEDS_INFO', 'APPROVED', 'REJECTED']],
     ['NEEDS_INFO', ['IN_REVIEW']],
     ['APPROVED', []],
-    ['IN_PROGRESS', []],
+    ['IN_PROGRESS', ['DELIVERED']],
     ['DELIVERED', []],
     ['REJECTED', []],
   ])('allows only PM triage transitions from %s', (from, expected) => {

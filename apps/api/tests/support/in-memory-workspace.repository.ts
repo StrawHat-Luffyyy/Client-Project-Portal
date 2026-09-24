@@ -37,6 +37,7 @@ export class InMemoryWorkspaceRepository implements WorkspaceRepository {
   projects: ProjectRecord[] = [];
   requirements: RequirementRecord[] = [];
   activities: RequirementActivityRecord[] = [];
+  deliverableRequirementIds = new Set<string>();
 
   listClients(scope: AuthenticatedScope, pagination: PaginationQuery) {
     const visible = this.clients.filter(
@@ -225,6 +226,10 @@ export class InMemoryWorkspaceRepository implements WorkspaceRepository {
     );
     visible.reverse();
     return page(visible, pagination);
+  }
+
+  canDeliverRequirement(_scope: AuthenticatedScope, requirementId: string) {
+    return Promise.resolve(this.deliverableRequirementIds.has(requirementId));
   }
 }
 

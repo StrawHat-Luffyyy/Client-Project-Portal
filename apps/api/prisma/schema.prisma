@@ -169,6 +169,7 @@ model Requirement {
 model Task {
   id             String       @id @default(cuid())
   organizationId String
+  idempotencyKey String?
   requirementId  String
   title          String
   description    String
@@ -185,6 +186,7 @@ model Task {
   comments       Comment[]
 
   @@index([organizationId])
+  @@unique([organizationId, idempotencyKey])
   @@index([requirementId, status])
   @@index([assigneeId, status])
 }
@@ -259,4 +261,3 @@ model Notification {
   @@index([organizationId])
   @@index([userId, readAt, createdAt])
 }
-

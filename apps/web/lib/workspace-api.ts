@@ -5,6 +5,8 @@ import {
   projectSchema,
   requirementActivitySchema,
   requirementSchema,
+  taskAssigneeSchema,
+  taskSchema,
 } from '@client-portal/shared';
 import { z } from 'zod';
 
@@ -36,4 +38,15 @@ export const requirementResponseSchema = z.object({ data: requirementSchema });
 export const requirementActivityResponseSchema = z.object({
   data: z.array(requirementActivitySchema),
   pagination: paginationMetaSchema,
+});
+
+export const tasksResponseSchema = z.object({
+  data: z.array(taskSchema),
+  pagination: paginationMetaSchema,
+});
+
+export const taskResponseSchema = z.object({ data: taskSchema });
+
+export const taskAssigneesResponseSchema = z.object({
+  data: z.array(taskAssigneeSchema),
 });
