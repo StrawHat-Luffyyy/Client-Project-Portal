@@ -69,8 +69,18 @@ Completed on 2026-09-24:
 - direct arbitrary requirement status update — rejected with HTTP 400
 - organization-wide client/project reads by ENGINEER — rejected with HTTP 403
 - local and container production compilation — passed, including all Phase 3 routes
+- Phase 3 API and web images — built and unpacked successfully in Docker Desktop
+- live Phase 3 Compose stack — PostgreSQL and API healthy; web route returned HTTP 200
+- live ADMIN client and project creation — passed
+- live CLIENT project list — limited to the authenticated client's project
+- live multipart requirement submission with a text attachment — passed
+- live cross-client project access — concealed with HTTP 404
+- live direct requirement status mutation — rejected with HTTP 400
+- live ENGINEER portfolio access — rejected with HTTP 403
+- live requirement, attachment metadata, and attachment file persistence — verified
+- `CLIENT_CREATED`, `PROJECT_CREATED`, and `REQUIREMENT_SUBMITTED` activity entries — verified in PostgreSQL
 
-The PostgreSQL and attachment volumes are preserved for local development. Live Phase 3 Compose workflow verification is pending an environment recovery: Docker Desktop compiled both images, then returned `EOF` while unpacking the web image and its WSL backend began crashing on a stale runtime-socket rename. Clearing only the disposable sockets and restarting the Docker WSL distribution did not restore the engine. This is a Docker Desktop host failure; lint, typecheck, automated tests, local production builds, Compose configuration, and container compilation passed.
+The Docker host issue is resolved. PostgreSQL and attachment volumes are preserved for local development.
 
 ## Next phase
 
