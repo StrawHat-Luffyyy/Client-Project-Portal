@@ -26,6 +26,8 @@ services:
       DATABASE_URL: postgresql://portal:portal@postgres:5432/client_portal?schema=public
       JWT_SECRET: local-docker-jwt-secret-change-before-production
       NODE_ENV: production
+      ATTACHMENT_STORAGE: local
+      UPLOAD_DIRECTORY: /workspace/uploads
       WEB_ORIGIN: http://localhost:3000
     command:
       - sh
@@ -42,6 +44,8 @@ services:
       retries: 10
     ports:
       - '4000:4000'
+    volumes:
+      - api-uploads:/workspace/uploads
 
   web:
     build:
@@ -56,4 +60,5 @@ services:
       - '3000:3000'
 
 volumes:
+  api-uploads:
   postgres-data:

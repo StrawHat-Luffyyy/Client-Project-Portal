@@ -11,6 +11,8 @@ const envSchema = z.object({
   CSRF_SECRET: z.string().min(32).optional(),
   JWT_EXPIRES_IN_SECONDS: z.coerce.number().int().positive().default(28_800),
   COOKIE_SECURE: z.enum(['true', 'false']).optional(),
+  ATTACHMENT_STORAGE: z.literal('local').default('local'),
+  UPLOAD_DIRECTORY: z.string().min(1).default('./uploads'),
 });
 
 const parsedEnv = envSchema.parse(process.env);

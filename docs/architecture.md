@@ -22,7 +22,7 @@ Backend requests follow `route -> controller -> service -> repository / Prisma -
 
 Every organization-owned model stores `organizationId`. The JWT stores only the user ID. Authentication middleware reloads the user and derives `organizationId`, role, and optional `clientId` from the database on every protected request; request bodies cannot override that scope.
 
-Central role middleware rejects unauthorized actions before business data access. Tenant policy helpers return not-found errors for out-of-scope records to avoid leaking their existence. CLIENT access always adds its authenticated `clientId`; repositories introduced in later phases must apply these helpers before querying Prisma. SSE subscriptions will use the same authenticated scope.
+Central role middleware rejects unauthorized actions before business data access. Tenant policy helpers and scoped repository filters return not-found errors for out-of-scope records to avoid leaking their existence. CLIENT project and requirement queries always add the authenticated `clientId`; arbitrary organization, client, project, and requirement IDs are never trusted. SSE subscriptions will use the same authenticated scope.
 
 The access JWT is stored in an `httpOnly`, `SameSite=Lax` cookie. State-changing requests use a signed double-submit CSRF cookie and matching `x-csrf-token` header. Auth endpoints are rate-limited. Invitation tokens are random, returned only in the generated invite link, and stored as SHA-256 hashes. Acceptance claims an invite and creates its user in one transaction.
 
@@ -33,7 +33,8 @@ The access JWT is stored in an `httpOnly`, `SameSite=Lax` cookie. State-changing
 - IDs are CUID strings. They are opaque to clients and do not replace authorization checks.
 - User email is globally unique, matching the starting model in the brief. This keeps login unambiguous for the MVP.
 - Comments support one optional parent, which provides the requested threaded-lite behavior without arbitrary discussion-tree features.
-- Development attachments default to a local `uploads` directory. Production uses S3 through a storage adapter introduced with attachments.
+- Phase 3 attachments use a local `uploads` directory through an attachment-storage interface. Files are limited to 10 MB and an allowlist of common business formats, receive random storage keys, and are removed if the database transaction fails. The deployment phase provides the S3 implementation.
+- ADMIN and PM users may create clients and projects. CLIENT users submit requirements only to projects belonging to their authenticated client account. Requirement content can be edited by its submitting client while `SUBMITTED` or `NEEDS_INFO`; status changes are reserved for the Phase 4 transition service.
 - The initial web shell uses system fallbacks for the selected Plus Jakarta Sans aesthetic so builds do not depend on a font CDN. A self-hosted font may be added during UI polish if justified.
 - The UI direction is a restrained light B2B interface: high contrast, compact information density, visible keyboard focus, and reduced-motion support.
 - Authentication cookies are `httpOnly`, `SameSite=Lax`, and secure by default in production. Local HTTP Compose explicitly sets `COOKIE_SECURE=false`; deployed environments must not use that override.
@@ -41,4 +42,4 @@ The access JWT is stored in an `httpOnly`, `SameSite=Lax` cookie. State-changing
 
 ## Reliability model
 
-Multi-record mutations use Prisma transactions. Side-effecting workflows will accept or derive idempotency keys where retries can duplicate work. Activity entries are written in the same transaction as their mutations. Requirement transitions live in domain services and are tested independently.
+Multi-record mutations use Prisma transactions. Activity entries are written in the same transaction as client, project, and requirement mutations. Local attachment writes are compensated if requirement persistence fails. Side-effecting workflows will accept or derive idempotency keys where retries can duplicate work. Requirement transitions live in domain services and are tested independently.

@@ -1,4 +1,5 @@
 import type { ErrorRequestHandler, RequestHandler } from 'express';
+import { MulterError } from 'multer';
 import { ZodError } from 'zod';
 
 import { AppError } from '../domain/errors.js';
@@ -34,6 +35,19 @@ export const errorHandler: ErrorRequestHandler = (
   if (error instanceof AppError) {
     response.status(error.statusCode).json({
       error: { code: error.code, message: error.message },
+    });
+    return;
+  }
+
+  if (error instanceof MulterError) {
+    response.status(400).json({
+      error: {
+        code: 'ATTACHMENT_INVALID',
+        message:
+          error.code === 'LIMIT_FILE_SIZE'
+            ? 'Attachments must be 10 MB or smaller.'
+            : 'The attachment could not be processed.',
+      },
     });
     return;
   }

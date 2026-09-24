@@ -2,6 +2,7 @@ import type {
   InputHTMLAttributes,
   ReactNode,
   SelectHTMLAttributes,
+  TextareaHTMLAttributes,
 } from 'react';
 
 const inputClassName =
@@ -49,6 +50,17 @@ export function SelectInput(props: SelectHTMLAttributes<HTMLSelectElement>) {
     <select
       {...props}
       className={`${inputClassName} ${props.className ?? ''}`}
+    />
+  );
+}
+
+export function TextAreaInput(
+  props: TextareaHTMLAttributes<HTMLTextAreaElement>,
+) {
+  return (
+    <textarea
+      {...props}
+      className={`${inputClassName} min-h-32 resize-y ${props.className ?? ''}`}
     />
   );
 }

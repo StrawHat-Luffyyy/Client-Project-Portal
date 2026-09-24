@@ -4,7 +4,7 @@ Last updated: 2026-09-24
 
 ## Current phase
 
-Phase 2 — Authentication, RBAC, and tenancy: complete.
+Phase 3 — Clients, projects, and requirements: complete.
 
 ## Completed
 
@@ -24,6 +24,14 @@ Phase 2 — Authentication, RBAC, and tenancy: complete.
 - central authentication, RBAC, and tenant/client scope policy
 - login, registration, invite acceptance, authenticated dashboard, logout, and invitation UI
 - authentication, authorization, CSRF, invitation replay, and tenant isolation tests
+- tenant-scoped client and project list/create/detail APIs
+- paginated project and requirement listings with status filtering
+- client-only requirement submission and eligible content updates
+- optional local requirement attachments with type and size validation
+- transactional activity entries for clients, projects, and requirements
+- role-aware projects, project detail, requirement detail, and client/team UI
+- client selectors for project creation and CLIENT invitations
+- cross-client and cross-organization project/requirement isolation tests
 
 ## Verification
 
@@ -54,9 +62,16 @@ Completed on 2026-09-24:
 - invited ENGINEER organization assignment — verified in API and PostgreSQL
 - invitation token stored as a 64-character SHA-256 hash — verified
 - `INVITE_CREATED` and `INVITE_ACCEPTED` activity entries — verified
+- `pnpm test` — passed with 21 API tests after Phase 3
+- CLIENT project listing limited to its authenticated `clientId` — passed
+- cross-client and cross-organization project/requirement access — rejected with HTTP 404
+- CLIENT requirement submission with attachment — passed
+- direct arbitrary requirement status update — rejected with HTTP 400
+- organization-wide client/project reads by ENGINEER — rejected with HTTP 403
+- local and container production compilation — passed, including all Phase 3 routes
 
-The Phase 2 verification containers and network were removed after testing. The PostgreSQL volume was preserved for local development.
+The PostgreSQL and attachment volumes are preserved for local development. Live Phase 3 Compose workflow verification is pending an environment recovery: Docker Desktop compiled both images, then returned `EOF` while unpacking the web image and its WSL backend began crashing on a stale runtime-socket rename. Clearing only the disposable sockets and restarting the Docker WSL distribution did not restore the engine. This is a Docker Desktop host failure; lint, typecheck, automated tests, local production builds, Compose configuration, and container compilation passed.
 
 ## Next phase
 
-Phase 3 — tenant-scoped clients, projects, and requirement submission APIs and UI, including pagination, validation, authorization, and isolation tests.
+Phase 4 — requirement triage, validated status transitions, rejection/request-information reasons, and requirement activity history.

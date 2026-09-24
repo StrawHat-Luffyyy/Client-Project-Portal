@@ -4,7 +4,7 @@ A production-style, multi-tenant project operations portal for clients, project 
 
 ## Status
 
-Phase 2 is complete: the foundation, authentication, invitations, RBAC, CSRF protection, and centralized tenant scope are implemented. Client/project workflows begin in Phase 3; see `PROJECT_STATE.md`.
+Phase 3 is complete: authentication and tenancy now support scoped clients, projects, requirement submission, content updates, and local attachments. Requirement triage begins in Phase 4; see `PROJECT_STATE.md`.
 
 ## Architecture
 
@@ -56,7 +56,7 @@ Alternatively, start the complete container stack with `docker compose up --buil
 | `CSRF_SECRET`             | CSRF-token secret (phase 2)                 |
 | `JWT_EXPIRES_IN_SECONDS`  | Access-cookie lifetime; defaults to 8 hours |
 | `COOKIE_SECURE`           | Secure-cookie override for local HTTP only  |
-| `ATTACHMENT_STORAGE`      | `local` in development, `s3` in production  |
+| `ATTACHMENT_STORAGE`      | Attachment adapter; currently `local`       |
 | `UPLOAD_DIRECTORY`        | Local attachment directory                  |
 | `AWS_REGION`, `S3_BUCKET` | Production attachment storage settings      |
 
@@ -77,18 +77,23 @@ pnpm db:seed
 
 All endpoints use `/api/v1` and the standard error envelope.
 
-| Method | Endpoint                 | Purpose                                            |
-| ------ | ------------------------ | -------------------------------------------------- |
-| GET    | `/health`                | Service health                                     |
-| GET    | `/auth/csrf`             | Issue a signed double-submit CSRF token            |
-| POST   | `/auth/register-org`     | Create an organization and its ADMIN               |
-| POST   | `/auth/login`            | Authenticate and set the JWT cookie                |
-| POST   | `/auth/logout`           | Clear authentication cookies                       |
-| GET    | `/auth/me`               | Return the authenticated server-derived user scope |
-| POST   | `/invites`               | Create an invitation; ADMIN only                   |
-| POST   | `/invites/:token/accept` | Accept a one-time invitation                       |
+| Method    | Endpoint                     | Purpose                                            |
+| --------- | ---------------------------- | -------------------------------------------------- |
+| GET       | `/health`                    | Service health                                     |
+| GET       | `/auth/csrf`                 | Issue a signed double-submit CSRF token            |
+| POST      | `/auth/register-org`         | Create an organization and its ADMIN               |
+| POST      | `/auth/login`                | Authenticate and set the JWT cookie                |
+| POST      | `/auth/logout`               | Clear authentication cookies                       |
+| GET       | `/auth/me`                   | Return the authenticated server-derived user scope |
+| POST      | `/invites`                   | Create an invitation; ADMIN only                   |
+| POST      | `/invites/:token/accept`     | Accept a one-time invitation                       |
+| GET/POST  | `/clients`                   | List scoped clients or create one (ADMIN/PM)       |
+| GET/POST  | `/projects`                  | List scoped projects or create one (ADMIN/PM)      |
+| GET       | `/projects/:id`              | Read a tenant- and client-scoped project           |
+| GET/POST  | `/projects/:id/requirements` | List requirements or submit one (CLIENT)           |
+| GET/PATCH | `/requirements/:id`          | Read or edit eligible submitted content            |
 
-State-changing requests require the CSRF token from `/auth/csrf` in the `x-csrf-token` header. Browser requests must include credentials. Remaining domain endpoints follow in later phases.
+State-changing requests require the CSRF token from `/auth/csrf` in the `x-csrf-token` header. Browser requests must include credentials. Requirement creation accepts `multipart/form-data` with an optional `attachment` field; supported files are PDF, Word, text, PNG, and JPEG up to 10 MB.
 
 ## Demo credentials
 
@@ -105,7 +110,7 @@ These accounts can sign in at `/login`.
 
 ## Demo workflow
 
-The completed MVP will demonstrate: client submits requirement → PM reviews and approves → PM creates and assigns tasks → engineer starts and completes work → PM confirms delivery → client sees status and activity. The seed data includes two client accounts' data to support isolation testing.
+The current workflow supports: ADMIN/PM creates a client and project → ADMIN invites a client user → CLIENT opens its scoped project and submits a requirement with an optional attachment. Subsequent phases add PM triage, tasks, comments, and live delivery status. The seed data includes two client accounts to support isolation testing.
 
 ## Deployment summary
 
@@ -116,5 +121,5 @@ Local development uses Docker Compose. The production target is ECS Fargate, RDS
 - Modular monolith over microservices: simpler transactions and deployment fit the MVP.
 - SSE over WebSockets: the required realtime traffic is server-to-client.
 - Global unique email: matches the source model and makes tenant discovery during login unnecessary.
-- Local storage in development and S3 in production: one interface, environment-specific implementation.
+- Local storage is implemented behind an attachment-storage interface for development and Compose. The S3 adapter is bound during the deployment phase without changing requirement services.
 - No speculative event bus or cache: PostgreSQL-backed workflows come first; scaling mechanisms will be added only if required.
