@@ -4,7 +4,7 @@ Last updated: 2026-09-24
 
 ## Current phase
 
-Phase 5 — Task breakdown and Kanban task board: complete.
+Phase 6 — Comments with visibility rules: complete.
 
 ## Completed
 
@@ -47,6 +47,15 @@ Phase 5 — Task breakdown and Kanban task board: complete.
 - tenant/client-scoped task summaries on requirement details
 - responsive PM/ENGINEER board with project and assignee filtering
 - transactional task and automatic requirement activity entries
+- paginated comments on requirements and tasks
+- one-level threaded-lite replies with parent visibility enforcement
+- internal and client-visible discussion channels
+- client creation restricted to client-visible comments
+- assigned-engineer comment scope for tasks and their requirements
+- client/organization isolation for every comment target and parent
+- internal comment activity filtered from client audit history
+- transactional immutable `COMMENT_CREATED` activity entries
+- accessible requirement discussions and lazy-loaded board-card task discussions
 
 ## Verification
 
@@ -129,9 +138,26 @@ Completed on 2026-09-24:
 - live task workflow — both tasks advanced through every status to `DONE`
 - live PM delivery confirmation — changed the requirement to `DELIVERED`
 - task idempotency migration, final task rows, assignees, and 13 immutable activity rows — verified in PostgreSQL
+- `pnpm typecheck` — passed after Phase 6
+- `pnpm lint` — passed after Phase 6
+- `pnpm test` — passed with 42 API tests after Phase 6
+- `pnpm build` — passed for shared, API, and web packages after Phase 6
+- Prisma generation and schema validation — passed with the comment parent index
+- comment API tests — passed for CSRF, visibility, one-level replies, assignment scope, client isolation, organization isolation, and activity filtering
+- Phase 6 API and web images — built successfully in Docker Desktop
+- live Phase 6 Compose stack — PostgreSQL and API healthy; requirement and board routes returned HTTP 200
+- live PM requirement discussion — created internal and client-visible comments
+- live CLIENT requirement view — returned the visible comment and excluded the internal comment
+- live CLIENT internal-comment attempt — rejected with HTTP 403
+- live one-level CLIENT reply — created successfully
+- live nested reply and visibility-changing reply — rejected with HTTP 409
+- live assigned ENGINEER task comment — created successfully
+- live CLIENT task discussion — excluded the engineer's internal note and accepted a client-visible question
+- live client activity — included visible comment mutations and excluded internal requirement/task comment activity
+- comment parent index, five target-specific rows, reply relationship, visibility values, and five activity entries — verified in PostgreSQL
 
-Phase 5 live verification is complete. Named PostgreSQL and attachment volumes remain preserved for local development.
+Phase 6 live verification is complete. Named PostgreSQL and attachment volumes remain preserved for local development.
 
 ## Next phase
 
-Phase 6 — comments with internal and client-visible visibility rules.
+Phase 7 — tenant-filtered SSE live updates and notifications.

@@ -29,6 +29,7 @@ import {
   WorkspaceShell,
 } from '../../../components/workspace/workspace-shell';
 import { RequirementTasks } from '../../../components/workspace/requirement-tasks';
+import { CommentThread } from '../../../components/workspace/comment-thread';
 import { apiRequest } from '../../../lib/api-client';
 import {
   requirementActivityResponseSchema,
@@ -59,6 +60,11 @@ function activityTitle(activity: RequirementActivity) {
       : 'Task created';
   }
   if (activity.action === 'TASK_UPDATED') return 'Task details updated';
+  if (activity.action === 'COMMENT_CREATED') {
+    return activity.metadata.targetType === 'TASK'
+      ? 'Task comment added'
+      : 'Requirement comment added';
+  }
   if (activity.action === 'TASK_STATUS_CHANGED') {
     const from = activity.metadata.from;
     const to = activity.metadata.to;
@@ -314,6 +320,11 @@ function RequirementContent({
         <RequirementTasks
           requirementId={requirementId}
           requirementStatus={requirement.data.status}
+          user={user}
+        />
+        <CommentThread
+          targetId={requirementId}
+          targetType="requirements"
           user={user}
         />
         <ActivityTimeline requirementId={requirementId} />

@@ -5,6 +5,7 @@ import {
   type AuthUser,
   type CreateTaskInput,
   type RequirementStatus,
+  type Task,
   type TaskStatus,
 } from '@client-portal/shared';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -20,6 +21,7 @@ import {
   TextAreaInput,
   TextInput,
 } from '../auth/form-controls';
+import { CommentThread } from './comment-thread';
 import { apiRequest } from '../../lib/api-client';
 import {
   taskAssigneesResponseSchema,
@@ -47,6 +49,29 @@ function taskFormDefaults(): CreateTaskInput {
     estimateHours: null,
     dueDate: null,
   };
+}
+
+function TaskDiscussion({ task, user }: { task: Task; user: AuthUser }) {
+  const [open, setOpen] = useState(false);
+  return (
+    <details
+      className="mt-4 border-t border-slate-100 pt-3"
+      onToggle={(event) => setOpen(event.currentTarget.open)}
+    >
+      <summary className="cursor-pointer rounded-md py-2 text-sm font-semibold text-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-600/30">
+        Task discussion
+      </summary>
+      <div className="mt-2">
+        <CommentThread
+          compact
+          enabled={open}
+          targetId={task.id}
+          targetType="tasks"
+          user={user}
+        />
+      </div>
+    </details>
+  );
 }
 
 export function RequirementTasks({
@@ -178,6 +203,7 @@ export function RequirementTasks({
                   </dd>
                 </div>
               </dl>
+              <TaskDiscussion task={task} user={user} />
             </li>
           ))}
         </ul>

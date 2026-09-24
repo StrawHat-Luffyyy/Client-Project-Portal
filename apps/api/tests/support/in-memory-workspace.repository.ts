@@ -222,7 +222,12 @@ export class InMemoryWorkspaceRepository implements WorkspaceRepository {
     const visible = this.activities.filter(
       (activity) =>
         activity.organizationId === scope.organizationId &&
-        activity.entityId === requirementId,
+        activity.entityId === requirementId &&
+        !(
+          scope.role === 'CLIENT' &&
+          activity.action === 'COMMENT_CREATED' &&
+          activity.metadata.visibility === 'INTERNAL'
+        ),
     );
     visible.reverse();
     return page(visible, pagination);

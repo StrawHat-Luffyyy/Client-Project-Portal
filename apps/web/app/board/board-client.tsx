@@ -10,6 +10,7 @@ import {
   AuthenticatedScreen,
   WorkspaceShell,
 } from '../../components/workspace/workspace-shell';
+import { CommentThread } from '../../components/workspace/comment-thread';
 import { apiRequest } from '../../lib/api-client';
 import {
   projectsResponseSchema,
@@ -39,11 +40,14 @@ function TaskCard({
   task,
   move,
   showRequirementLink,
+  user,
 }: {
   task: Task;
   move: (taskId: string, to: TaskStatus) => void;
   showRequirementLink: boolean;
+  user: AuthUser;
 }) {
+  const [commentsOpen, setCommentsOpen] = useState(false);
   const next = nextStatus[task.status];
   return (
     <article className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
@@ -96,6 +100,23 @@ function TaskCard({
           {next ? <option value={next}>{statusLabel(next)}</option> : null}
         </select>
       </label>
+      <details
+        className="mt-4 border-t border-slate-100 pt-3"
+        onToggle={(event) => setCommentsOpen(event.currentTarget.open)}
+      >
+        <summary className="cursor-pointer rounded-md py-2 text-sm font-semibold text-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-600/30">
+          Task discussion
+        </summary>
+        <div className="mt-2">
+          <CommentThread
+            compact
+            enabled={commentsOpen}
+            targetId={task.id}
+            targetType="tasks"
+            user={user}
+          />
+        </div>
+      </details>
     </article>
   );
 }
@@ -246,6 +267,7 @@ function BoardContent({ user }: { user: AuthUser }) {
                         }}
                         showRequirementLink={user.role === 'PM'}
                         task={task}
+                        user={user}
                       />
                     ))
                   )}

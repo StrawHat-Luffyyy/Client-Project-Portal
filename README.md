@@ -4,7 +4,7 @@ A production-style, multi-tenant project operations portal for clients, project 
 
 ## Status
 
-Phase 5 is complete and verified locally with Docker Compose: PMs can break approved requirements into assigned tasks, engineers can advance their work on the Kanban board, the first task start automatically starts its requirement, and PM delivery confirmation is blocked until every task is done. See `PROJECT_STATE.md`.
+Phase 6 is complete and verified locally with Docker Compose: clients and delivery teams can discuss requirements and tasks using one-level replies, while internal comments and their activity entries remain completely hidden from clients. See `PROJECT_STATE.md`.
 
 ## Architecture
 
@@ -99,6 +99,8 @@ All endpoints use `/api/v1` and the standard error envelope.
 | GET       | `/tasks/assignees`             | List organization engineers for PM assignment      |
 | PATCH     | `/tasks/:id`                   | Edit a `TODO` task as PM                           |
 | POST      | `/tasks/:id/move`              | Apply the next validated task status               |
+| GET/POST  | `/requirements/:id/comments`   | List or create scoped requirement comments         |
+| GET/POST  | `/tasks/:id/comments`          | List or create scoped task comments                |
 
 State-changing requests require the CSRF token from `/auth/csrf` in the `x-csrf-token` header. Browser requests must include credentials. Requirement creation accepts `multipart/form-data` with an optional `attachment` field; supported files are PDF, Word, text, PNG, and JPEG up to 10 MB.
 
@@ -122,9 +124,10 @@ These accounts can sign in at `/login`.
 3. On the approved requirement, create one or more tasks with an engineer, estimate, and due date.
 4. Sign in as the ENGINEER, open `/board`, and move each assigned task through `TODO`, `IN_PROGRESS`, `IN_REVIEW`, and `DONE`.
 5. Sign back in as the PM and confirm delivery after all tasks are done.
-6. Sign in as the CLIENT to see the delivered requirement, task summary, and activity timeline.
+6. Use requirement and task discussions for internal delivery notes or client-visible updates and one-level replies.
+7. Sign in as the CLIENT to see the delivered requirement, task summary, client-visible comments, and activity timeline.
 
-The current workflow supports: ADMIN/PM creates a client and project → ADMIN invites a client user → CLIENT submits a requirement with an optional attachment → PM reviews and approves or rejects it → PM creates an assigned task breakdown → ENGINEER advances assigned tasks on the board → PM confirms delivery once all work is done → CLIENT sees task progress and activity history. Subsequent phases add comments and live updates. The seed data includes two client accounts to support isolation testing.
+The current workflow supports: ADMIN/PM creates a client and project → ADMIN invites a client user → CLIENT submits a requirement with an optional attachment → PM reviews and approves or rejects it → PM creates an assigned task breakdown → ENGINEER advances assigned tasks on the board → CLIENT and delivery teams collaborate through visibility-controlled discussions → PM confirms delivery once all work is done → CLIENT sees task progress and client-safe activity history. Subsequent phases add live updates and notifications. The seed data includes two client accounts to support isolation testing.
 
 ## Deployment summary
 
@@ -139,4 +142,6 @@ Local development uses Docker Compose. The production target is ECS Fargate, RDS
 - Request-information and rejection transitions require a reason and expose it in the activity timeline. This keeps client follow-up actionable; only rejection also persists the reason on the requirement itself.
 - Task status changes are forward-only and use a native dropdown on the board. This provides the brief's required status-change workflow with dependable keyboard access and without adding a drag-and-drop dependency.
 - Task creation requires a UUID idempotency key and is unique within an organization, preventing duplicate tasks from retries or double submissions.
+- Threaded-lite comments allow one reply level and keep the parent's visibility. Comments are immutable in the MVP because edit/delete endpoints are outside the brief.
+- Internal comments are filtered from both comment responses and client activity responses, preventing the audit trail from disclosing that a hidden discussion exists.
 - No speculative event bus or cache: PostgreSQL-backed workflows come first; scaling mechanisms will be added only if required.

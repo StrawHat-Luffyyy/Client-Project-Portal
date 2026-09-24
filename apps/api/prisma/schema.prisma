@@ -211,6 +211,7 @@ model Comment {
   @@index([organizationId])
   @@index([requirementId, createdAt])
   @@index([taskId, createdAt])
+  @@index([parentId])
 }
 
 model Attachment {

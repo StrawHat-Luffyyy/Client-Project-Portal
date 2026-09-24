@@ -1,6 +1,7 @@
 import {
   authUserSchema,
   clientSchema,
+  commentSchema,
   paginationMetaSchema,
   projectSchema,
   requirementActivitySchema,
@@ -50,3 +51,10 @@ export const taskResponseSchema = z.object({ data: taskSchema });
 export const taskAssigneesResponseSchema = z.object({
   data: z.array(taskAssigneeSchema),
 });
+
+export const commentsResponseSchema = z.object({
+  data: z.array(commentSchema),
+  pagination: paginationMetaSchema,
+});
+
+export const commentResponseSchema = z.object({ data: commentSchema });

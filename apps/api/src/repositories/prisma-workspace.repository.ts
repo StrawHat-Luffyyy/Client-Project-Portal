@@ -378,6 +378,14 @@ export class PrismaWorkspaceRepository implements WorkspaceRepository {
       organizationId: scope.organizationId,
       entityType: 'REQUIREMENT',
       entityId: requirementId,
+      ...(scope.role === 'CLIENT'
+        ? {
+            NOT: {
+              action: 'COMMENT_CREATED',
+              metadata: { path: ['visibility'], equals: 'INTERNAL' },
+            },
+          }
+        : {}),
     };
     const [items, total] = await this.database.$transaction([
       this.database.activityLog.findMany({
