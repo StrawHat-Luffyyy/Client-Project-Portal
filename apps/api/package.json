@@ -1,0 +1,41 @@
+{
+  "name": "@client-portal/api",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "dev": "tsx watch src/server.ts",
+    "start": "node dist/server.js",
+    "lint": "eslint src tests prisma/seed.ts",
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit",
+    "db:generate": "prisma generate",
+    "db:migrate": "prisma migrate dev",
+    "db:migration:sql": "prisma migrate diff --from-empty --to-schema-datamodel prisma/schema.prisma --script",
+    "db:seed": "tsx prisma/seed.ts",
+    "db:validate": "prisma validate"
+  },
+  "dependencies": {
+    "@client-portal/shared": "workspace:*",
+    "@prisma/client": "^6.16.2",
+    "bcrypt": "^6.0.0",
+    "cors": "^2.8.5",
+    "express": "^5.1.0",
+    "helmet": "^8.1.0",
+    "pino": "^9.9.4",
+    "pino-http": "^10.5.0",
+    "zod": "^4.1.11"
+  },
+  "devDependencies": {
+    "@types/bcrypt": "^6.0.0",
+    "@types/cors": "^2.8.19",
+    "@types/express": "^5.0.3",
+    "@types/node": "^24.5.2",
+    "@types/supertest": "^6.0.3",
+    "prisma": "^6.16.2",
+    "supertest": "^7.1.4",
+    "tsx": "^4.20.5",
+    "vitest": "^3.2.4"
+  }
+}

@@ -1,0 +1,56 @@
+services:
+  postgres:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_DB: client_portal
+      POSTGRES_PASSWORD: portal
+      POSTGRES_USER: portal
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U portal -d client_portal']
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    ports:
+      - '5432:5432'
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+
+  api:
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile
+    environment:
+      API_PORT: 4000
+      DATABASE_URL: postgresql://portal:portal@postgres:5432/client_portal?schema=public
+      NODE_ENV: production
+      WEB_ORIGIN: http://localhost:3000
+    command:
+      - sh
+      - -c
+      - pnpm --filter @client-portal/api db:generate && pnpm --filter @client-portal/api exec prisma migrate deploy && pnpm --filter @client-portal/api db:seed && node apps/api/dist/src/server.js
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test:
+        ['CMD', 'wget', '-q', '-O', '-', 'http://localhost:4000/api/v1/health']
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    ports:
+      - '4000:4000'
+
+  web:
+    build:
+      context: .
+      dockerfile: apps/web/Dockerfile
+    environment:
+      NEXT_PUBLIC_API_URL: http://localhost:4000/api/v1
+    depends_on:
+      api:
+        condition: service_healthy
+    ports:
+      - '3000:3000'
+
+volumes:
+  postgres-data:

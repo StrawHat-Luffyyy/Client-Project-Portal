@@ -1,0 +1,30 @@
+{
+  "name": "client-project-portal",
+  "version": "0.1.0",
+  "private": true,
+  "packageManager": "pnpm@11.9.0",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "build": "pnpm --filter @client-portal/shared build && pnpm --filter @client-portal/api build && pnpm --filter @client-portal/web build",
+    "dev": "pnpm --parallel --filter @client-portal/shared --filter @client-portal/api --filter @client-portal/web dev",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "lint": "pnpm -r lint",
+    "test": "pnpm -r test",
+    "typecheck": "pnpm -r typecheck",
+    "db:generate": "pnpm --filter @client-portal/api db:generate",
+    "db:migrate": "pnpm --filter @client-portal/api db:migrate",
+    "db:seed": "pnpm --filter @client-portal/api db:seed"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.36.0",
+    "eslint": "^9.36.0",
+    "eslint-config-prettier": "^10.1.8",
+    "globals": "^16.4.0",
+    "prettier": "^3.6.2",
+    "typescript": "^5.9.2",
+    "typescript-eslint": "^8.44.0"
+  }
+}

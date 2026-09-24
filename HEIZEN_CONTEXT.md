@@ -1,0 +1,1 @@
+This project is intended to demonstrate the engineering qualities expected by an enterprise software engineering role: end-to-end feature ownership, client-facing workflows, scalable APIs, databases, cloud deployment, strong security, reliable state transitions, and polished but practical UX.
