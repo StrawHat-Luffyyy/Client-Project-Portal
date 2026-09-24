@@ -3,6 +3,7 @@ import {
   clientSchema,
   paginationMetaSchema,
   projectSchema,
+  requirementActivitySchema,
   requirementSchema,
 } from '@client-portal/shared';
 import { z } from 'zod';
@@ -31,3 +32,8 @@ export const requirementsResponseSchema = z.object({
 });
 
 export const requirementResponseSchema = z.object({ data: requirementSchema });
+
+export const requirementActivityResponseSchema = z.object({
+  data: z.array(requirementActivitySchema),
+  pagination: paginationMetaSchema,
+});

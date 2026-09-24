@@ -4,7 +4,7 @@ Last updated: 2026-09-24
 
 ## Current phase
 
-Phase 3 — Clients, projects, and requirements: complete.
+Phase 4 — Requirement triage and activity history: implementation complete; live Docker verification pending host recovery.
 
 ## Completed
 
@@ -32,6 +32,12 @@ Phase 3 — Clients, projects, and requirements: complete.
 - role-aware projects, project detail, requirement detail, and client/team UI
 - client selectors for project creation and CLIENT invitations
 - cross-client and cross-organization project/requirement isolation tests
+- PM-only requirement triage endpoint with validated state transitions
+- required explanations for request-information and rejection decisions
+- atomic status changes and immutable requirement activity entries
+- tenant- and client-scoped paginated requirement activity API
+- role-aware PM triage controls and requirement activity timeline
+- rejection explanations surfaced on requirement details
 
 ## Verification
 
@@ -79,9 +85,16 @@ Completed on 2026-09-24:
 - live ENGINEER portfolio access — rejected with HTTP 403
 - live requirement, attachment metadata, and attachment file persistence — verified
 - `CLIENT_CREATED`, `PROJECT_CREATED`, and `REQUIREMENT_SUBMITTED` activity entries — verified in PostgreSQL
+- `pnpm typecheck` — passed after Phase 4
+- `pnpm lint` — passed after Phase 4
+- `pnpm test` — passed with 30 API tests after Phase 4
+- `pnpm build` — passed for shared, API, and web packages after Phase 4
+- PM transition-policy unit tests — passed for every requirement status
+- triage API tests — passed for RBAC, required reasons, invalid transitions, terminal rejection, activity ordering, and tenant/client isolation
+- Phase 4 requirement UI production build — passed
 
-The Docker host issue is resolved. PostgreSQL and attachment volumes are preserved for local development.
+Phase 4 live Compose verification is pending Docker Desktop host recovery. The image build reached dependency installation, then BuildKit disconnected with `EOF`; Docker's WSL distribution subsequently stopped and failed to bootstrap with `0xc00000fd`. A controlled Docker Desktop restart and WSL shutdown/relaunch did not restore the engine. Named PostgreSQL and attachment volumes were not removed.
 
 ## Next phase
 
-Phase 4 — requirement triage, validated status transitions, rejection/request-information reasons, and requirement activity history.
+Phase 5 — task breakdown and the Kanban task board, after Phase 4 live Compose verification is completed.

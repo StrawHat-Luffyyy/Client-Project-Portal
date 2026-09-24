@@ -268,4 +268,122 @@ describe('clients, projects, and requirements API', () => {
     await agent.get('/api/v1/projects').expect(403);
     await agent.get('/api/v1/clients').expect(403);
   });
+
+  it('enforces PM triage transitions, reasons, activity, and tenant scope', async () => {
+    const now = new Date();
+    workspace.requirements.push({
+      id: 'requirement-triage',
+      organizationId: 'organization-a',
+      projectId: 'project-a',
+      createdById: 'client-user-a',
+      title: 'Triage this request',
+      description:
+        'A requirement fixture used to verify the PM triage workflow.',
+      priority: 'MEDIUM',
+      status: 'SUBMITTED',
+      rejectionReason: null,
+      createdAt: now,
+      updatedAt: now,
+      createdBy: { id: 'client-user-a', name: 'Client A' },
+      attachments: [],
+    });
+
+    const pm = await authenticatedAgent(app, 'pm-a@example.com');
+    const pmToken = await csrf(pm);
+    await pm
+      .post('/api/v1/requirements/requirement-triage/transition')
+      .set('x-csrf-token', pmToken)
+      .send({ to: 'APPROVED' })
+      .expect(409, {
+        error: {
+          code: 'INVALID_REQUIREMENT_TRANSITION',
+          message: 'Requirement cannot transition from SUBMITTED to APPROVED.',
+        },
+      });
+
+    await pm
+      .post('/api/v1/requirements/requirement-triage/transition')
+      .set('x-csrf-token', pmToken)
+      .send({ to: 'IN_REVIEW' })
+      .expect(200);
+    await pm
+      .post('/api/v1/requirements/requirement-triage/transition')
+      .set('x-csrf-token', pmToken)
+      .send({ to: 'NEEDS_INFO' })
+      .expect(400);
+    const needsInfo = await pm
+      .post('/api/v1/requirements/requirement-triage/transition')
+      .set('x-csrf-token', pmToken)
+      .send({
+        to: 'NEEDS_INFO',
+        reason: 'Please provide the expected monthly report columns.',
+      })
+      .expect(200);
+    expect(needsInfo.body).toMatchObject({
+      data: { status: 'NEEDS_INFO', rejectionReason: null },
+    });
+
+    const client = await authenticatedAgent(app, 'client-user-a@example.com');
+    const activity = await client
+      .get('/api/v1/requirements/requirement-triage/activity')
+      .expect(200);
+    expect(activity.body).toMatchObject({
+      data: [
+        {
+          action: 'REQUIREMENT_STATUS_CHANGED',
+          metadata: {
+            from: 'IN_REVIEW',
+            to: 'NEEDS_INFO',
+            reason: 'Please provide the expected monthly report columns.',
+          },
+        },
+        {
+          action: 'REQUIREMENT_STATUS_CHANGED',
+          metadata: { from: 'SUBMITTED', to: 'IN_REVIEW' },
+        },
+      ],
+      pagination: { total: 2 },
+    });
+    const clientToken = await csrf(client);
+    await client
+      .post('/api/v1/requirements/requirement-triage/transition')
+      .set('x-csrf-token', clientToken)
+      .send({ to: 'IN_REVIEW' })
+      .expect(403);
+
+    for (const email of [
+      'client-user-b@example.com',
+      'client-user-c@example.com',
+    ]) {
+      const hiddenClient = await authenticatedAgent(app, email);
+      await hiddenClient
+        .get('/api/v1/requirements/requirement-triage/activity')
+        .expect(404);
+    }
+
+    await pm
+      .post('/api/v1/requirements/requirement-triage/transition')
+      .set('x-csrf-token', pmToken)
+      .send({ to: 'IN_REVIEW' })
+      .expect(200);
+    const rejected = await pm
+      .post('/api/v1/requirements/requirement-triage/transition')
+      .set('x-csrf-token', pmToken)
+      .send({
+        to: 'REJECTED',
+        reason: 'The request is outside the agreed project scope.',
+      })
+      .expect(200);
+    expect(rejected.body).toMatchObject({
+      data: {
+        status: 'REJECTED',
+        rejectionReason: 'The request is outside the agreed project scope.',
+      },
+    });
+    await pm
+      .post('/api/v1/requirements/requirement-triage/transition')
+      .set('x-csrf-token', pmToken)
+      .send({ to: 'IN_REVIEW' })
+      .expect(409);
+  });
 });

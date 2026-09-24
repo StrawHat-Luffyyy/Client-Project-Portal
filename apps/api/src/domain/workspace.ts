@@ -5,6 +5,7 @@ import type {
   PaginationQuery,
   ProjectListQuery,
   RequirementListQuery,
+  RequirementTransitionInput,
   UpdateRequirementInput,
 } from '@client-portal/shared';
 
@@ -72,6 +73,22 @@ export interface PendingAttachment {
   size: number;
 }
 
+export interface RequirementActivityRecord {
+  id: string;
+  organizationId: string;
+  actorId: string;
+  entityType: 'REQUIREMENT';
+  entityId: string;
+  action: string;
+  metadata: Record<string, unknown>;
+  createdAt: Date;
+  actor: {
+    id: string;
+    name: string;
+    role: 'ADMIN' | 'PM' | 'ENGINEER' | 'CLIENT';
+  };
+}
+
 export interface WorkspaceRepository {
   listClients(
     scope: AuthenticatedScope,
@@ -113,6 +130,17 @@ export interface WorkspaceRepository {
     requirementId: string,
     input: UpdateRequirementInput,
   ): Promise<RequirementRecord | null>;
+  transitionRequirement(
+    scope: AuthenticatedScope,
+    requirementId: string,
+    currentStatus: RequirementRecord['status'],
+    input: RequirementTransitionInput,
+  ): Promise<RequirementRecord | null>;
+  listRequirementActivity(
+    scope: AuthenticatedScope,
+    requirementId: string,
+    pagination: PaginationQuery,
+  ): Promise<Page<RequirementActivityRecord> | null>;
 }
 
 export interface UploadedFile {

@@ -35,6 +35,7 @@ The access JWT is stored in an `httpOnly`, `SameSite=Lax` cookie. State-changing
 - Comments support one optional parent, which provides the requested threaded-lite behavior without arbitrary discussion-tree features.
 - Phase 3 attachments use a local `uploads` directory through an attachment-storage interface. Files are limited to 10 MB and an allowlist of common business formats, receive random storage keys, and are removed if the database transaction fails. The deployment phase provides the S3 implementation.
 - ADMIN and PM users may create clients and projects. CLIENT users submit requirements only to projects belonging to their authenticated client account. Requirement content can be edited by its submitting client while `SUBMITTED` or `NEEDS_INFO`; status changes are reserved for the Phase 4 transition service.
+- PM triage allows only `SUBMITTED -> IN_REVIEW`, `IN_REVIEW -> NEEDS_INFO | APPROVED | REJECTED`, and `NEEDS_INFO -> IN_REVIEW`. `NEEDS_INFO` and `REJECTED` require a client-visible reason. `APPROVED -> IN_PROGRESS` remains automatic when Phase 5 starts the first task, and delivery remains a separate PM confirmation after all tasks are done.
 - The initial web shell uses system fallbacks for the selected Plus Jakarta Sans aesthetic so builds do not depend on a font CDN. A self-hosted font may be added during UI polish if justified.
 - The UI direction is a restrained light B2B interface: high contrast, compact information density, visible keyboard focus, and reduced-motion support.
 - Authentication cookies are `httpOnly`, `SameSite=Lax`, and secure by default in production. Local HTTP Compose explicitly sets `COOKIE_SECURE=false`; deployed environments must not use that override.
@@ -42,4 +43,4 @@ The access JWT is stored in an `httpOnly`, `SameSite=Lax` cookie. State-changing
 
 ## Reliability model
 
-Multi-record mutations use Prisma transactions. Activity entries are written in the same transaction as client, project, and requirement mutations. Local attachment writes are compensated if requirement persistence fails. Side-effecting workflows will accept or derive idempotency keys where retries can duplicate work. Requirement transitions live in domain services and are tested independently.
+Multi-record mutations use Prisma transactions. Activity entries are written in the same transaction as client, project, and requirement mutations. Requirement transitions use an expected-current-status update so concurrent requests cannot apply the same transition twice. Local attachment writes are compensated if requirement persistence fails. Side-effecting workflows will accept or derive idempotency keys where retries can duplicate work. Requirement transitions live in domain services and are tested independently.

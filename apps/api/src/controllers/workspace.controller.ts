@@ -5,6 +5,7 @@ import {
   paginationQuerySchema,
   projectListQuerySchema,
   requirementListQuerySchema,
+  requirementTransitionSchema,
   updateRequirementSchema,
 } from '@client-portal/shared';
 import type { RequestHandler } from 'express';
@@ -15,6 +16,7 @@ import type {
   Page,
   ProjectRecord,
   RequirementRecord,
+  RequirementActivityRecord,
 } from '../domain/workspace.js';
 import type { WorkspaceService } from '../services/workspace.service.js';
 
@@ -47,6 +49,10 @@ function requirementJson(requirement: RequirementRecord) {
       createdAt: attachment.createdAt.toISOString(),
     })),
   };
+}
+
+function requirementActivityJson(activity: RequirementActivityRecord) {
+  return { ...activity, createdAt: activity.createdAt.toISOString() };
 }
 
 export function createWorkspaceController(service: WorkspaceService) {
@@ -140,6 +146,29 @@ export function createWorkspaceController(service: WorkspaceService) {
     response.json({ data: requirementJson(requirement) });
   };
 
+  const transitionRequirement: RequestHandler = async (request, response) => {
+    const { id } = idParamsSchema.parse(request.params);
+    const requirement = await service.transitionRequirement(
+      request.auth!,
+      id,
+      requirementTransitionSchema.parse(request.body),
+    );
+    response.json({ data: requirementJson(requirement) });
+  };
+
+  const listRequirementActivity: RequestHandler = async (request, response) => {
+    const { id } = idParamsSchema.parse(request.params);
+    const page = await service.listRequirementActivity(
+      request.auth!,
+      id,
+      paginationQuerySchema.parse(request.query),
+    );
+    response.json({
+      data: page.items.map(requirementActivityJson),
+      pagination: pagination(page),
+    });
+  };
+
   return {
     createClient,
     createProject,
@@ -149,6 +178,8 @@ export function createWorkspaceController(service: WorkspaceService) {
     listClients,
     listProjects,
     listRequirements,
+    listRequirementActivity,
+    transitionRequirement,
     updateRequirement,
   };
 }

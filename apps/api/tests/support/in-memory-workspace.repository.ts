@@ -5,6 +5,7 @@ import type {
   PaginationQuery,
   ProjectListQuery,
   RequirementListQuery,
+  RequirementTransitionInput,
   UpdateRequirementInput,
 } from '@client-portal/shared';
 
@@ -16,6 +17,7 @@ import type {
   PendingAttachment,
   ProjectRecord,
   RequirementRecord,
+  RequirementActivityRecord,
   UploadedFile,
   WorkspaceRepository,
 } from '../../src/domain/workspace.js';
@@ -34,6 +36,7 @@ export class InMemoryWorkspaceRepository implements WorkspaceRepository {
   clients: ClientRecord[] = [];
   projects: ProjectRecord[] = [];
   requirements: RequirementRecord[] = [];
+  activities: RequirementActivityRecord[] = [];
 
   listClients(scope: AuthenticatedScope, pagination: PaginationQuery) {
     const visible = this.clients.filter(
@@ -177,6 +180,51 @@ export class InMemoryWorkspaceRepository implements WorkspaceRepository {
     }
     Object.assign(requirement, input, { updatedAt: new Date() });
     return requirement;
+  }
+
+  async transitionRequirement(
+    scope: AuthenticatedScope,
+    requirementId: string,
+    currentStatus: RequirementRecord['status'],
+    input: RequirementTransitionInput,
+  ) {
+    const requirement = await this.findRequirement(scope, requirementId);
+    if (!requirement || requirement.status !== currentStatus) return null;
+    requirement.status = input.to;
+    requirement.rejectionReason =
+      input.to === 'REJECTED' ? (input.reason ?? null) : null;
+    requirement.updatedAt = new Date();
+    this.activities.push({
+      id: `activity-${this.activities.length + 1}`,
+      organizationId: scope.organizationId,
+      actorId: scope.userId,
+      entityType: 'REQUIREMENT',
+      entityId: requirementId,
+      action: 'REQUIREMENT_STATUS_CHANGED',
+      metadata: {
+        from: currentStatus,
+        to: input.to,
+        ...(input.reason ? { reason: input.reason } : {}),
+      },
+      createdAt: new Date(),
+      actor: { id: scope.userId, name: scope.userId, role: scope.role },
+    });
+    return requirement;
+  }
+
+  async listRequirementActivity(
+    scope: AuthenticatedScope,
+    requirementId: string,
+    pagination: PaginationQuery,
+  ) {
+    if (!(await this.findRequirement(scope, requirementId))) return null;
+    const visible = this.activities.filter(
+      (activity) =>
+        activity.organizationId === scope.organizationId &&
+        activity.entityId === requirementId,
+    );
+    visible.reverse();
+    return page(visible, pagination);
   }
 }
 

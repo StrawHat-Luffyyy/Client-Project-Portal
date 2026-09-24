@@ -5,11 +5,13 @@ import type {
   PaginationQuery,
   ProjectListQuery,
   RequirementListQuery,
+  RequirementTransitionInput,
   UpdateRequirementInput,
 } from '@client-portal/shared';
 
 import type { AuthenticatedScope } from '../domain/auth.js';
 import { AppError } from '../domain/errors.js';
+import { assertPmRequirementTransition } from '../domain/requirement-transition.js';
 import type {
   AttachmentStorage,
   UploadedFile,
@@ -117,5 +119,48 @@ export class WorkspaceService {
       );
     }
     return requirement;
+  }
+
+  async transitionRequirement(
+    scope: AuthenticatedScope,
+    requirementId: string,
+    input: RequirementTransitionInput,
+  ) {
+    const existing = await this.getRequirement(scope, requirementId);
+    assertPmRequirementTransition(existing.status, input);
+    const requirement = await this.repository.transitionRequirement(
+      scope,
+      requirementId,
+      existing.status,
+      input,
+    );
+    if (!requirement) {
+      throw new AppError(
+        409,
+        'REQUIREMENT_CHANGED',
+        'The requirement changed before the transition could be completed.',
+      );
+    }
+    return requirement;
+  }
+
+  async listRequirementActivity(
+    scope: AuthenticatedScope,
+    requirementId: string,
+    pagination: PaginationQuery,
+  ) {
+    const page = await this.repository.listRequirementActivity(
+      scope,
+      requirementId,
+      pagination,
+    );
+    if (!page) {
+      throw new AppError(
+        404,
+        'REQUIREMENT_NOT_FOUND',
+        'Requirement was not found.',
+      );
+    }
+    return page;
   }
 }

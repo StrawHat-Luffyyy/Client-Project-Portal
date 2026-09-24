@@ -3,6 +3,7 @@ import { z } from 'zod';
 import {
   requirementPrioritySchema,
   requirementStatusSchema,
+  roleSchema,
 } from './domain.js';
 
 const identifierSchema = z.string().trim().min(1).max(128);
@@ -72,6 +73,42 @@ export const updateRequirementSchema = createRequirementSchema
     message: 'At least one requirement field must be provided.',
   });
 
+export const requirementTransitionSchema = z
+  .object({
+    to: requirementStatusSchema,
+    reason: z.string().trim().min(5).max(2_000).optional(),
+  })
+  .superRefine((value, context) => {
+    const requiresReason = value.to === 'NEEDS_INFO' || value.to === 'REJECTED';
+    if (requiresReason && !value.reason) {
+      context.addIssue({
+        code: 'custom',
+        path: ['reason'],
+        message: 'A reason is required for this transition.',
+      });
+    }
+    if (!requiresReason && value.reason) {
+      context.addIssue({
+        code: 'custom',
+        path: ['reason'],
+        message:
+          'A reason is only accepted when requesting information or rejecting.',
+      });
+    }
+  });
+
+export const requirementActivitySchema = z.object({
+  id: z.string(),
+  organizationId: z.string(),
+  actorId: z.string(),
+  entityType: z.literal('REQUIREMENT'),
+  entityId: z.string(),
+  action: z.string(),
+  metadata: z.record(z.string(), z.unknown()),
+  createdAt: z.string().datetime(),
+  actor: z.object({ id: z.string(), name: z.string(), role: roleSchema }),
+});
+
 export const projectListQuerySchema = z.object({
   page: z.coerce.number().int().positive().default(1),
   pageSize: z.coerce.number().int().min(1).max(100).default(20),
@@ -91,5 +128,9 @@ export type CreateProjectInput = z.infer<typeof createProjectSchema>;
 export type Requirement = z.infer<typeof requirementSchema>;
 export type CreateRequirementInput = z.infer<typeof createRequirementSchema>;
 export type UpdateRequirementInput = z.infer<typeof updateRequirementSchema>;
+export type RequirementTransitionInput = z.infer<
+  typeof requirementTransitionSchema
+>;
+export type RequirementActivity = z.infer<typeof requirementActivitySchema>;
 export type ProjectListQuery = z.infer<typeof projectListQuerySchema>;
 export type RequirementListQuery = z.infer<typeof requirementListQuerySchema>;

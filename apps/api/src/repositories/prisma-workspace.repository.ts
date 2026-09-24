@@ -7,6 +7,7 @@ import type {
   PaginationQuery,
   ProjectListQuery,
   RequirementListQuery,
+  RequirementTransitionInput,
   UpdateRequirementInput,
 } from '@client-portal/shared';
 
@@ -324,5 +325,89 @@ export class PrismaWorkspaceRepository implements WorkspaceRepository {
       });
       return requirement;
     });
+  }
+
+  async transitionRequirement(
+    scope: AuthenticatedScope,
+    requirementId: string,
+    currentStatus: Parameters<WorkspaceRepository['transitionRequirement']>[2],
+    input: RequirementTransitionInput,
+  ) {
+    return this.database.$transaction(async (transaction) => {
+      const result = await transaction.requirement.updateMany({
+        where: {
+          id: requirementId,
+          organizationId: scope.organizationId,
+          status: currentStatus,
+        },
+        data: {
+          status: input.to,
+          rejectionReason: input.to === 'REJECTED' ? input.reason : null,
+        },
+      });
+      if (result.count !== 1) return null;
+
+      await transaction.activityLog.create({
+        data: {
+          organizationId: scope.organizationId,
+          actorId: scope.userId,
+          entityType: 'REQUIREMENT',
+          entityId: requirementId,
+          action: 'REQUIREMENT_STATUS_CHANGED',
+          metadata: {
+            from: currentStatus,
+            to: input.to,
+            ...(input.reason ? { reason: input.reason } : {}),
+          },
+        },
+      });
+      return transaction.requirement.findUnique({
+        where: { id: requirementId },
+        select: requirementSelect,
+      });
+    });
+  }
+
+  async listRequirementActivity(
+    scope: AuthenticatedScope,
+    requirementId: string,
+    pagination: PaginationQuery,
+  ) {
+    if (!(await this.findRequirement(scope, requirementId))) return null;
+    const where: Prisma.ActivityLogWhereInput = {
+      organizationId: scope.organizationId,
+      entityType: 'REQUIREMENT',
+      entityId: requirementId,
+    };
+    const [items, total] = await this.database.$transaction([
+      this.database.activityLog.findMany({
+        where,
+        orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
+        skip: (pagination.page - 1) * pagination.pageSize,
+        take: pagination.pageSize,
+        select: {
+          id: true,
+          organizationId: true,
+          actorId: true,
+          entityType: true,
+          entityId: true,
+          action: true,
+          metadata: true,
+          createdAt: true,
+          actor: { select: { id: true, name: true, role: true } },
+        },
+      }),
+      this.database.activityLog.count({ where }),
+    ]);
+    return pageOf(
+      items.map((item) => ({
+        ...item,
+        entityType: 'REQUIREMENT' as const,
+        metadata: item.metadata as Record<string, unknown>,
+      })),
+      pagination.page,
+      pagination.pageSize,
+      total,
+    );
   }
 }

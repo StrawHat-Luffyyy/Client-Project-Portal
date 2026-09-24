@@ -47,11 +47,18 @@ export function createWorkspaceRouters(
 
   requirements.use(authenticate, requireRole('ADMIN', 'PM', 'CLIENT'));
   requirements.get('/:id', controller.getRequirement);
+  requirements.get('/:id/activity', controller.listRequirementActivity);
   requirements.patch(
     '/:id',
     requireRole('CLIENT'),
     requireCsrf,
     controller.updateRequirement,
+  );
+  requirements.post(
+    '/:id/transition',
+    requireRole('PM'),
+    requireCsrf,
+    controller.transitionRequirement,
   );
 
   return { clients, projects, requirements };
