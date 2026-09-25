@@ -2,6 +2,7 @@ import {
   authUserSchema,
   clientSchema,
   commentSchema,
+  dashboardSchema,
   notificationSchema,
   paginationMetaSchema,
   projectSchema,
@@ -68,3 +69,5 @@ export const notificationsResponseSchema = z.object({
 export const notificationResponseSchema = z.object({
   data: notificationSchema,
 });
+
+export const dashboardResponseSchema = z.object({ data: dashboardSchema });

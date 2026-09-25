@@ -28,6 +28,7 @@ import {
   AuthenticatedScreen,
   WorkspaceShell,
 } from '../../../components/workspace/workspace-shell';
+import { QueryError } from '../../../components/workspace/query-error';
 import { RequirementTasks } from '../../../components/workspace/requirement-tasks';
 import { CommentThread } from '../../../components/workspace/comment-thread';
 import { apiRequest } from '../../../lib/api-client';
@@ -103,7 +104,11 @@ function ActivityTimeline({ requirementId }: { requirementId: string }) {
         </p>
       ) : activity.isError ? (
         <div className="mt-5">
-          <FormAlert message={activity.error.message} />
+          <QueryError
+            message={activity.error.message}
+            onRetry={() => void activity.refetch()}
+            title="Unable to load activity"
+          />
         </div>
       ) : activity.data.length === 0 ? (
         <p className="mt-5 rounded-lg bg-slate-50 px-4 py-5 text-sm text-slate-600">
@@ -272,7 +277,15 @@ function RequirementContent({
     );
   }
   if (requirement.isError)
-    return <FormAlert message={requirement.error.message} />;
+    return (
+      <main className="mx-auto max-w-xl px-5 py-20 sm:px-8">
+        <QueryError
+          message={requirement.error.message}
+          onRetry={() => void requirement.refetch()}
+          title="Unable to load this requirement"
+        />
+      </main>
+    );
 
   return (
     <div className="grid gap-6 lg:grid-cols-[1.4fr_0.6fr]">

@@ -15,7 +15,7 @@ export default function ErrorPage({
         Try again. If the problem continues, contact your administrator.
       </p>
       <button
-        className="mt-6 min-h-11 cursor-pointer rounded-md bg-blue-600 px-5 py-3 text-sm font-semibold text-white transition-colors hover:bg-blue-700"
+        className="mt-6 min-h-11 cursor-pointer rounded-md bg-blue-600 px-5 py-3 text-sm font-semibold text-white transition-colors hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-600/30 focus:ring-offset-2"
         onClick={reset}
         type="button"
       >

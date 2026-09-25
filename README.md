@@ -4,7 +4,7 @@ A production-style, multi-tenant project operations portal for clients, project 
 
 ## Status
 
-Phase 7 is complete and verified locally with Docker Compose: tenant-filtered notifications and SSE cache invalidation now keep requirement status, task status, comments, and unread counts current without exposing internal activity to clients. See `PROJECT_STATE.md`.
+Phase 8 is complete and verified locally with Docker Compose: every role now has a scoped delivery dashboard with project progress, requirement health, and recent activity, alongside consistent loading, empty, error-recovery, responsive, and not-found states. See `PROJECT_STATE.md`.
 
 ## Architecture
 
@@ -104,6 +104,7 @@ All endpoints use `/api/v1` and the standard error envelope.
 | GET       | `/notifications`               | List paginated notifications for the current user  |
 | POST      | `/notifications/:id/read`      | Idempotently mark a scoped notification as read    |
 | GET       | `/events`                      | Open the authenticated, user-filtered SSE stream   |
+| GET       | `/dashboard`                   | Read role-aware, tenant-scoped delivery metrics    |
 
 State-changing requests require the CSRF token from `/auth/csrf` in the `x-csrf-token` header. Browser requests must include credentials. Requirement creation accepts `multipart/form-data` with an optional `attachment` field; supported files are PDF, Word, text, PNG, and JPEG up to 10 MB.
 
@@ -122,7 +123,7 @@ These accounts can sign in at `/login`.
 
 ## Demo workflow
 
-1. Sign in as the CLIENT and submit a requirement from one of its projects.
+1. Sign in as the CLIENT, review the scoped portfolio dashboard, and submit a requirement from one of its projects.
 2. Sign in as the PM, open the requirement, move it into review, and approve it.
 3. On the approved requirement, create one or more tasks with an engineer, estimate, and due date.
 4. Sign in as the ENGINEER, open `/board`, and move each assigned task through `TODO`, `IN_PROGRESS`, `IN_REVIEW`, and `DONE`.
@@ -149,3 +150,4 @@ Local development uses Docker Compose. The production target is ECS Fargate, RDS
 - Internal comments are filtered from both comment responses and client activity responses, preventing the audit trail from disclosing that a hidden discussion exists.
 - Notifications are durable PostgreSQL rows created transactionally with the originating mutation. Delivery targets the owning client, relevant assignees, and organization delivery roles while excluding the actor; internal comments never produce client notifications.
 - SSE polls recipient-specific notification rows once per second and acts only as a TanStack Query invalidation signal. Historical unread items come from the notification API, and no speculative event bus or duplicate client state is introduced.
+- The dashboard uses one role-aware read model instead of separate role-specific APIs. Clients see only their client portfolio and client-safe activity, engineers see only assigned delivery work, and PM/ADMIN users see organization-wide delivery health.

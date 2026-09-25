@@ -58,6 +58,12 @@ export function WorkspaceShell({
 
   return (
     <div className="min-h-dvh bg-slate-50">
+      <a
+        className="sr-only z-50 rounded-md bg-blue-700 px-4 py-2 font-semibold text-white focus:not-sr-only focus:fixed focus:left-4 focus:top-4"
+        href="#workspace-content"
+      >
+        Skip to main content
+      </a>
       <header className="border-b border-slate-200 bg-white">
         <div className="mx-auto flex max-w-6xl flex-wrap items-center gap-x-6 gap-y-3 px-5 py-3 sm:px-8">
           <Link
@@ -68,7 +74,7 @@ export function WorkspaceShell({
           </Link>
           <nav
             aria-label="Primary navigation"
-            className="order-3 flex w-full gap-1 sm:order-none sm:w-auto"
+            className="order-3 flex w-full flex-wrap gap-1 sm:order-none sm:w-auto"
           >
             {navigation.map((item) => {
               const active =
@@ -76,7 +82,7 @@ export function WorkspaceShell({
               return (
                 <Link
                   aria-current={active ? 'page' : undefined}
-                  className={`inline-flex min-h-11 items-center rounded-md px-3 py-2.5 text-sm font-medium transition-colors ${active ? 'bg-blue-50 text-blue-800' : 'text-slate-600 hover:bg-slate-50 hover:text-slate-950'}`}
+                  className={`inline-flex min-h-11 cursor-pointer items-center rounded-md px-3 py-2.5 text-sm font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-blue-600/30 ${active ? 'bg-blue-50 text-blue-800' : 'text-slate-600 hover:bg-slate-50 hover:text-slate-950'}`}
                   href={item.href}
                   key={item.href}
                 >
@@ -96,7 +102,10 @@ export function WorkspaceShell({
           </button>
         </div>
       </header>
-      <main className="mx-auto max-w-6xl px-5 py-8 sm:px-8 sm:py-10">
+      <main
+        className="mx-auto max-w-6xl px-5 py-8 sm:px-8 sm:py-10"
+        id="workspace-content"
+      >
         <div className="flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
           <div>
             <p className="text-sm font-semibold uppercase tracking-[0.14em] text-blue-700">

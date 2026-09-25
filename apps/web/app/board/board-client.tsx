@@ -11,6 +11,7 @@ import {
   WorkspaceShell,
 } from '../../components/workspace/workspace-shell';
 import { CommentThread } from '../../components/workspace/comment-thread';
+import { QueryError } from '../../components/workspace/query-error';
 import { apiRequest } from '../../lib/api-client';
 import {
   projectsResponseSchema,
@@ -209,7 +210,6 @@ function BoardContent({ user }: { user: AuthUser }) {
         </section>
       ) : null}
       <div className="mb-5 space-y-3">
-        <FormAlert message={tasks.error?.message} />
         <FormAlert message={projects.error?.message} />
         <FormAlert message={assignees.error?.message} />
         <FormAlert message={moveTask.error?.message} />
@@ -219,6 +219,12 @@ function BoardContent({ user }: { user: AuthUser }) {
         <p className="text-slate-600" aria-busy="true">
           Loading task board…
         </p>
+      ) : tasks.isError ? (
+        <QueryError
+          message={tasks.error.message}
+          onRetry={() => void tasks.refetch()}
+          title="Unable to load the task board"
+        />
       ) : tasks.data?.length === 0 ? (
         <div className="rounded-xl border border-dashed border-slate-300 bg-white px-6 py-12 text-center">
           <h2 className="font-semibold text-slate-950">No tasks to show</h2>
@@ -229,13 +235,13 @@ function BoardContent({ user }: { user: AuthUser }) {
           </p>
         </div>
       ) : (
-        <div className="grid gap-4 overflow-x-auto pb-2 lg:grid-cols-4">
+        <div className="grid gap-4 pb-2 sm:grid-cols-2 xl:grid-cols-4">
           {columns.map((column) => {
             const columnTasks =
               tasks.data?.filter((task) => task.status === column.status) ?? [];
             return (
               <section
-                className="min-w-64 rounded-xl bg-slate-100/80 p-3"
+                className="rounded-xl bg-slate-100/80 p-3"
                 key={column.status}
               >
                 <div className="flex items-center justify-between px-1 py-2">

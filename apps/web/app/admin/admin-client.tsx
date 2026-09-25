@@ -23,6 +23,7 @@ import {
   AuthenticatedScreen,
   WorkspaceShell,
 } from '../../components/workspace/workspace-shell';
+import { QueryError } from '../../components/workspace/query-error';
 import { apiRequest } from '../../lib/api-client';
 import {
   clientResponseSchema,
@@ -239,7 +240,11 @@ function AdminContent({ user }: { user: AuthUser }) {
           ) : null}
           {clients.isError ? (
             <div className="mt-4">
-              <FormAlert message={clients.error.message} />
+              <QueryError
+                message={clients.error.message}
+                onRetry={() => void clients.refetch()}
+                title="Unable to load clients"
+              />
             </div>
           ) : null}
           {clients.data?.data.length === 0 ? (

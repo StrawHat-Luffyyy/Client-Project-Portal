@@ -28,6 +28,7 @@ function invalidateForNotification(
   notification: Notification,
 ) {
   void queryClient.invalidateQueries({ queryKey: ['notifications'] });
+  void queryClient.invalidateQueries({ queryKey: ['dashboard'] });
   if (notification.type === 'REQUIREMENT_STATUS_CHANGED') {
     void queryClient.invalidateQueries({ queryKey: ['requirement'] });
     void queryClient.invalidateQueries({ queryKey: ['requirements'] });
@@ -78,6 +79,7 @@ export function NotificationBell({ user }: { user: AuthUser }) {
     });
     const onReady = () => {
       void queryClient.invalidateQueries({ queryKey: ['notifications'] });
+      void queryClient.invalidateQueries({ queryKey: ['dashboard'] });
       void queryClient.invalidateQueries({ queryKey: ['requirement'] });
       void queryClient.invalidateQueries({ queryKey: ['requirements'] });
       void queryClient.invalidateQueries({ queryKey: ['board-tasks'] });
@@ -107,7 +109,7 @@ export function NotificationBell({ user }: { user: AuthUser }) {
   return (
     <details className="relative">
       <summary className="relative flex min-h-11 min-w-11 cursor-pointer list-none items-center justify-center rounded-md border border-slate-300 text-slate-700 transition-colors hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-blue-600/30 [&::-webkit-details-marker]:hidden">
-        <span className="sr-only">
+        <span aria-atomic="true" aria-live="polite" className="sr-only">
           Notifications{unread.data ? `, ${unread.data} unread` : ''}
         </span>
         <svg

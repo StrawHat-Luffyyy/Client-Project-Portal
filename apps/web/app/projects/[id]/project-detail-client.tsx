@@ -28,6 +28,7 @@ import {
   AuthenticatedScreen,
   WorkspaceShell,
 } from '../../../components/workspace/workspace-shell';
+import { QueryError } from '../../../components/workspace/query-error';
 import { apiRequest } from '../../../lib/api-client';
 import {
   projectResponseSchema,
@@ -166,7 +167,15 @@ function ProjectContent({
     );
   }
   if (project.isError) {
-    return <FormAlert message={project.error.message} />;
+    return (
+      <main className="mx-auto max-w-xl px-5 py-20 sm:px-8">
+        <QueryError
+          message={project.error.message}
+          onRetry={() => void project.refetch()}
+          title="Unable to load this project"
+        />
+      </main>
+    );
   }
 
   return (
@@ -219,7 +228,11 @@ function ProjectContent({
           ) : null}
           {requirements.isError ? (
             <div className="mt-4">
-              <FormAlert message={requirements.error.message} />
+              <QueryError
+                message={requirements.error.message}
+                onRetry={() => void requirements.refetch()}
+                title="Unable to load requirements"
+              />
             </div>
           ) : null}
           {requirements.data?.data.length === 0 ? (

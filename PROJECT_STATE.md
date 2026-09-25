@@ -4,7 +4,7 @@ Last updated: 2026-09-25
 
 ## Current phase
 
-Phase 7 — SSE live updates and notifications: complete.
+Phase 8 — Dashboards, polish, and empty/error states: complete.
 
 ## Completed
 
@@ -62,6 +62,14 @@ Phase 7 — SSE live updates and notifications: complete.
 - authenticated SSE stream with per-user tenant filtering, polling cursor, reconnect hint, and heartbeat
 - notification bell with unread count, loading/empty/error feedback, read controls, and relevant TanStack Query invalidation
 - automated notification tenant-isolation, recipient-policy, CSRF, idempotency, and live SSE stream tests
+- role-aware dashboard API with scoped totals, requirement status distribution, project task progress, and recent activity
+- client dashboard isolation including removal of internal comment activity
+- engineer dashboard restricted to projects, requirements, tasks, and activity connected to assignments
+- PM/ADMIN organization-wide delivery dashboard without cross-tenant records
+- responsive dashboard metric, progress, status, and activity views with SSE-driven cache invalidation
+- reusable retryable query error state on dashboard, admin, board, project, requirement, and activity views
+- actionable empty states, a recovery-oriented 404 page, skip navigation, live unread announcements, and wrapped mobile navigation
+- responsive task board columns without horizontal page scrolling
 
 ## Verification
 
@@ -180,6 +188,21 @@ Phase 7 local verification completed on 2026-09-25:
 - CLIENT notification mark-read — idempotent across retries; cross-user PM access returned HTTP 404
 - live notification bell — showed the correct unread badge and client-safe items; the UI mark-read control cleared the badge
 
+Phase 8 verification completed on 2026-09-25:
+
+- `pnpm lint` — passed across shared, API, and web workspaces
+- `pnpm typecheck` — passed across shared, API, and web workspaces
+- `pnpm test` — passed with 51 API tests across 11 files
+- `pnpm build` — passed for shared, API, and web packages, including the dashboard and not-found routes
+- Phase 8 API and web images — built successfully in Docker Desktop
+- live Phase 8 Compose stack — PostgreSQL and API healthy; role dashboards loaded through the web container
+- live CLIENT dashboard — 1 scoped project, 5 requirements, 3 tasks, 67% completion, status distribution, and client-safe recent activity
+- live ENGINEER dashboard — limited to 1 assigned project, 2 related requirements, and 3 assigned tasks
+- live PM dashboard — organization-wide delivery totals with all four authorized navigation destinations
+- dashboard client, engineer, PM, unauthenticated, internal-activity, and cross-tenant cases — covered by passing API tests
+- 375px mobile and landscape layouts — no horizontal page overflow; navigation and metric cards reflowed correctly
+- accessible progress values, skip navigation, live notification count, and not-found recovery — verified in the rendered UI
+
 ## Next phase
 
-Phase 8 — dashboards, polish, and empty/error states.
+Phase 9 — end-to-end tests, final documentation, and deployment.

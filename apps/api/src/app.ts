@@ -7,6 +7,7 @@ import pinoHttp from 'pino-http';
 import { env } from './config/env.js';
 import type { IdentityRepository } from './domain/auth.js';
 import type { CommentRepository } from './domain/comment.js';
+import type { DashboardRepository } from './domain/dashboard.js';
 import type { NotificationRepository } from './domain/notification.js';
 import type {
   AttachmentStorage,
@@ -17,11 +18,13 @@ import { logger } from './lib/logger.js';
 import { errorHandler, notFoundHandler } from './middleware/error-handler.js';
 import { PrismaIdentityRepository } from './repositories/prisma-identity.repository.js';
 import { PrismaCommentRepository } from './repositories/prisma-comment.repository.js';
+import { PrismaDashboardRepository } from './repositories/prisma-dashboard.repository.js';
 import { PrismaNotificationRepository } from './repositories/prisma-notification.repository.js';
 import { PrismaWorkspaceRepository } from './repositories/prisma-workspace.repository.js';
 import { PrismaTaskRepository } from './repositories/prisma-task.repository.js';
 import { createAuthRouter } from './routes/auth.routes.js';
 import { createCommentRouters } from './routes/comment.routes.js';
+import { createDashboardRouter } from './routes/dashboard.routes.js';
 import { createNotificationRouters } from './routes/notification.routes.js';
 import { healthRouter } from './routes/health.routes.js';
 import { createInviteRouter } from './routes/invite.routes.js';
@@ -29,6 +32,7 @@ import { createTaskRouters } from './routes/task.routes.js';
 import { createWorkspaceRouters } from './routes/workspace.routes.js';
 import { AuthService } from './services/auth.service.js';
 import { CommentService } from './services/comment.service.js';
+import { DashboardService } from './services/dashboard.service.js';
 import { NotificationService } from './services/notification.service.js';
 import { LocalAttachmentStorage } from './services/attachment-storage.service.js';
 import { InviteService } from './services/invite.service.js';
@@ -38,6 +42,7 @@ import { WorkspaceService } from './services/workspace.service.js';
 export interface AppDependencies {
   identities?: IdentityRepository;
   comments?: CommentRepository;
+  dashboard?: DashboardRepository;
   notifications?: NotificationRepository;
   workspace?: WorkspaceRepository;
   tasks?: TaskRepository;
@@ -48,6 +53,7 @@ export function createApp(dependencies: AppDependencies = {}) {
   const app = express();
   const identities = dependencies.identities ?? new PrismaIdentityRepository();
   const comments = dependencies.comments ?? new PrismaCommentRepository();
+  const dashboard = dependencies.dashboard ?? new PrismaDashboardRepository();
   const notifications =
     dependencies.notifications ?? new PrismaNotificationRepository();
   const workspace = dependencies.workspace ?? new PrismaWorkspaceRepository();
@@ -57,6 +63,7 @@ export function createApp(dependencies: AppDependencies = {}) {
     new LocalAttachmentStorage(env.UPLOAD_DIRECTORY);
   const authService = new AuthService(identities);
   const commentService = new CommentService(comments);
+  const dashboardService = new DashboardService(dashboard);
   const notificationService = new NotificationService(notifications);
   const inviteService = new InviteService(identities);
   const workspaceService = new WorkspaceService(workspace, attachmentStorage);
@@ -84,6 +91,10 @@ export function createApp(dependencies: AppDependencies = {}) {
   );
   app.use('/api/v1/notifications', notificationRouters.notifications);
   app.use('/api/v1/events', notificationRouters.events);
+  app.use(
+    '/api/v1/dashboard',
+    createDashboardRouter(dashboardService, identities),
+  );
   app.use('/api/v1/clients', workspaceRouters.clients);
   app.use('/api/v1/projects', workspaceRouters.projects);
   app.use('/api/v1/requirements', commentRouters.requirementComments);
