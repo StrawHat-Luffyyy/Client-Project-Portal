@@ -5,7 +5,7 @@
   "scripts": {
     "build": "next build",
     "dev": "next dev",
-    "lint": "eslint app next.config.ts",
+    "lint": "eslint app components lib next.config.ts",
     "start": "next start",
     "test": "vitest run --passWithNoTests",
     "typecheck": "tsc --noEmit"

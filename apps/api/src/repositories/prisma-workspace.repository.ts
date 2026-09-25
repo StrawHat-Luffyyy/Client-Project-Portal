@@ -20,6 +20,7 @@ import type {
   WorkspaceRepository,
 } from '../domain/workspace.js';
 import { prisma } from '../lib/prisma.js';
+import { createRequirementNotifications } from './notification-recipient.js';
 
 const projectSelect = {
   id: true,
@@ -360,6 +361,13 @@ export class PrismaWorkspaceRepository implements WorkspaceRepository {
             ...(input.reason ? { reason: input.reason } : {}),
           },
         },
+      });
+      await createRequirementNotifications(transaction, {
+        organizationId: scope.organizationId,
+        actorId: scope.userId,
+        requirementId,
+        type: 'REQUIREMENT_STATUS_CHANGED',
+        includeClient: true,
       });
       return transaction.requirement.findUnique({
         where: { id: requirementId },

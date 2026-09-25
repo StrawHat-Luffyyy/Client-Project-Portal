@@ -1,10 +1,10 @@
 # Project State
 
-Last updated: 2026-09-24
+Last updated: 2026-09-25
 
 ## Current phase
 
-Phase 6 — Comments with visibility rules: complete.
+Phase 7 — SSE live updates and notifications: complete.
 
 ## Completed
 
@@ -56,6 +56,12 @@ Phase 6 — Comments with visibility rules: complete.
 - internal comment activity filtered from client audit history
 - transactional immutable `COMMENT_CREATED` activity entries
 - accessible requirement discussions and lazy-loaded board-card task discussions
+- transactionally persisted notifications for requirement status, task status, and comment mutations
+- recipient policy excluding the actor and limiting clients and engineers to their authorized workflow scope
+- paginated, user-scoped notification list and idempotent mark-read API
+- authenticated SSE stream with per-user tenant filtering, polling cursor, reconnect hint, and heartbeat
+- notification bell with unread count, loading/empty/error feedback, read controls, and relevant TanStack Query invalidation
+- automated notification tenant-isolation, recipient-policy, CSRF, idempotency, and live SSE stream tests
 
 ## Verification
 
@@ -158,6 +164,22 @@ Completed on 2026-09-24:
 
 Phase 6 live verification is complete. Named PostgreSQL and attachment volumes remain preserved for local development.
 
+Phase 7 local verification completed on 2026-09-25:
+
+- `pnpm typecheck` — passed across shared, API, and web workspaces
+- `pnpm lint` — passed across shared, API, and web workspaces
+- API tests — 47 passed across 10 files, including a real HTTP SSE stream test
+- shared, API, and Next.js production builds — passed
+- Phase 7 API and web images — built successfully in Docker Desktop
+- live Phase 7 Compose stack — PostgreSQL and API healthy; web login returned HTTP 200
+- live CLIENT SSE connection — authenticated and received its ready event
+- live PM client-visible requirement comment — produced a `COMMENT_CREATED` event for the owning CLIENT
+- live PM internal requirement comment — produced no CLIENT notification
+- live assigned ENGINEER task start — produced a `TASK_STATUS_CHANGED` event for the owning CLIENT and automatically advanced the requirement
+- persisted notification rows — verified for CLIENT, assigned ENGINEER, PM, and ADMIN recipients with the mutation actor excluded
+- CLIENT notification mark-read — idempotent across retries; cross-user PM access returned HTTP 404
+- live notification bell — showed the correct unread badge and client-safe items; the UI mark-read control cleared the badge
+
 ## Next phase
 
-Phase 7 — tenant-filtered SSE live updates and notifications.
+Phase 8 — dashboards, polish, and empty/error states.

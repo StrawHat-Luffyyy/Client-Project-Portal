@@ -8,6 +8,7 @@ import { useEffect, type ReactNode } from 'react';
 
 import { ApiClientError, apiRequest } from '../../lib/api-client';
 import { meResponseSchema } from '../../lib/workspace-api';
+import { NotificationBell } from './notification-bell';
 
 const dashboardNavItem = { href: '/dashboard', label: 'Dashboard' } as const;
 const projectsNavItem = { href: '/projects', label: 'Projects' } as const;
@@ -84,6 +85,7 @@ export function WorkspaceShell({
               );
             })}
           </nav>
+          <NotificationBell user={user} />
           <button
             className="min-h-11 cursor-pointer rounded-md border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
             disabled={logout.isPending}

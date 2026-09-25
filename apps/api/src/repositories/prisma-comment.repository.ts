@@ -14,6 +14,7 @@ import type {
 import { AppError } from '../domain/errors.js';
 import type { Page } from '../domain/workspace.js';
 import { prisma } from '../lib/prisma.js';
+import { createRequirementNotifications } from './notification-recipient.js';
 
 const commentSelect = {
   id: true,
@@ -56,7 +57,7 @@ export class PrismaCommentRepository implements CommentRepository {
   private async resolveTarget(
     scope: AuthenticatedScope,
     target: CommentTarget,
-  ): Promise<{ requirementId: string } | null> {
+  ): Promise<{ requirementId: string; engineerIds?: string[] } | null> {
     if (target.type === 'REQUIREMENT') {
       const requirement = await this.database.requirement.findFirst({
         where: {
@@ -93,9 +94,14 @@ export class PrismaCommentRepository implements CommentRepository {
             ? { assigneeId: scope.userId }
             : {}),
       },
-      select: { requirementId: true },
+      select: { requirementId: true, assigneeId: true },
     });
-    return task;
+    return task
+      ? {
+          requirementId: task.requirementId,
+          engineerIds: task.assigneeId ? [task.assigneeId] : [],
+        }
+      : null;
   }
 
   async listComments(
@@ -193,6 +199,14 @@ export class PrismaCommentRepository implements CommentRepository {
             parentId: comment.parentId,
           },
         },
+      });
+      await createRequirementNotifications(transaction, {
+        organizationId: scope.organizationId,
+        actorId: scope.userId,
+        requirementId: resolved.requirementId,
+        type: 'COMMENT_CREATED',
+        includeClient: comment.visibility === 'CLIENT_VISIBLE',
+        engineerIds: resolved.engineerIds,
       });
       return toComment(comment);
     });

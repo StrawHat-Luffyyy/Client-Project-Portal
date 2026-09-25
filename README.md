@@ -4,7 +4,7 @@ A production-style, multi-tenant project operations portal for clients, project 
 
 ## Status
 
-Phase 6 is complete and verified locally with Docker Compose: clients and delivery teams can discuss requirements and tasks using one-level replies, while internal comments and their activity entries remain completely hidden from clients. See `PROJECT_STATE.md`.
+Phase 7 is complete and verified locally with Docker Compose: tenant-filtered notifications and SSE cache invalidation now keep requirement status, task status, comments, and unread counts current without exposing internal activity to clients. See `PROJECT_STATE.md`.
 
 ## Architecture
 
@@ -101,6 +101,9 @@ All endpoints use `/api/v1` and the standard error envelope.
 | POST      | `/tasks/:id/move`              | Apply the next validated task status               |
 | GET/POST  | `/requirements/:id/comments`   | List or create scoped requirement comments         |
 | GET/POST  | `/tasks/:id/comments`          | List or create scoped task comments                |
+| GET       | `/notifications`               | List paginated notifications for the current user  |
+| POST      | `/notifications/:id/read`      | Idempotently mark a scoped notification as read    |
+| GET       | `/events`                      | Open the authenticated, user-filtered SSE stream   |
 
 State-changing requests require the CSRF token from `/auth/csrf` in the `x-csrf-token` header. Browser requests must include credentials. Requirement creation accepts `multipart/form-data` with an optional `attachment` field; supported files are PDF, Word, text, PNG, and JPEG up to 10 MB.
 
@@ -125,9 +128,9 @@ These accounts can sign in at `/login`.
 4. Sign in as the ENGINEER, open `/board`, and move each assigned task through `TODO`, `IN_PROGRESS`, `IN_REVIEW`, and `DONE`.
 5. Sign back in as the PM and confirm delivery after all tasks are done.
 6. Use requirement and task discussions for internal delivery notes or client-visible updates and one-level replies.
-7. Sign in as the CLIENT to see the delivered requirement, task summary, client-visible comments, and activity timeline.
+7. Keep the CLIENT session open to see the notification bell update when client-visible comments and workflow statuses change, then open the delivered requirement to see its task summary and activity timeline.
 
-The current workflow supports: ADMIN/PM creates a client and project → ADMIN invites a client user → CLIENT submits a requirement with an optional attachment → PM reviews and approves or rejects it → PM creates an assigned task breakdown → ENGINEER advances assigned tasks on the board → CLIENT and delivery teams collaborate through visibility-controlled discussions → PM confirms delivery once all work is done → CLIENT sees task progress and client-safe activity history. Subsequent phases add live updates and notifications. The seed data includes two client accounts to support isolation testing.
+The current workflow supports: ADMIN/PM creates a client and project → ADMIN invites a client user → CLIENT submits a requirement with an optional attachment → PM reviews and approves or rejects it → PM creates an assigned task breakdown → ENGINEER advances assigned tasks on the board → CLIENT and delivery teams collaborate through visibility-controlled discussions → PM confirms delivery once all work is done → CLIENT receives live, client-safe notifications and sees progress and activity history. The seed data includes two client accounts to support isolation testing.
 
 ## Deployment summary
 
@@ -144,4 +147,5 @@ Local development uses Docker Compose. The production target is ECS Fargate, RDS
 - Task creation requires a UUID idempotency key and is unique within an organization, preventing duplicate tasks from retries or double submissions.
 - Threaded-lite comments allow one reply level and keep the parent's visibility. Comments are immutable in the MVP because edit/delete endpoints are outside the brief.
 - Internal comments are filtered from both comment responses and client activity responses, preventing the audit trail from disclosing that a hidden discussion exists.
-- No speculative event bus or cache: PostgreSQL-backed workflows come first; scaling mechanisms will be added only if required.
+- Notifications are durable PostgreSQL rows created transactionally with the originating mutation. Delivery targets the owning client, relevant assignees, and organization delivery roles while excluding the actor; internal comments never produce client notifications.
+- SSE polls recipient-specific notification rows once per second and acts only as a TanStack Query invalidation signal. Historical unread items come from the notification API, and no speculative event bus or duplicate client state is introduced.

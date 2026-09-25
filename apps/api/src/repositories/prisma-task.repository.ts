@@ -14,6 +14,7 @@ import { AppError } from '../domain/errors.js';
 import type { TaskRecord, TaskRepository } from '../domain/task.js';
 import type { Page } from '../domain/workspace.js';
 import { prisma } from '../lib/prisma.js';
+import { createRequirementNotifications } from './notification-recipient.js';
 
 const taskSelect = {
   id: true,
@@ -324,6 +325,14 @@ export class PrismaTaskRepository implements TaskRepository {
           });
         }
       }
+      await createRequirementNotifications(transaction, {
+        organizationId: scope.organizationId,
+        actorId: scope.userId,
+        requirementId: task.requirementId,
+        type: 'TASK_STATUS_CHANGED',
+        includeClient: true,
+        engineerIds: task.assigneeId ? [task.assigneeId] : [],
+      });
       return toTask(task);
     });
   }
