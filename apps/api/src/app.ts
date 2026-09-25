@@ -30,11 +30,12 @@ import { healthRouter } from './routes/health.routes.js';
 import { createInviteRouter } from './routes/invite.routes.js';
 import { createTaskRouters } from './routes/task.routes.js';
 import { createWorkspaceRouters } from './routes/workspace.routes.js';
+import { createDocsRouter } from './routes/docs.routes.js';
 import { AuthService } from './services/auth.service.js';
 import { CommentService } from './services/comment.service.js';
 import { DashboardService } from './services/dashboard.service.js';
 import { NotificationService } from './services/notification.service.js';
-import { LocalAttachmentStorage } from './services/attachment-storage.service.js';
+import { createAttachmentStorage } from './services/attachment-storage.service.js';
 import { InviteService } from './services/invite.service.js';
 import { TaskService } from './services/task.service.js';
 import { WorkspaceService } from './services/workspace.service.js';
@@ -60,7 +61,13 @@ export function createApp(dependencies: AppDependencies = {}) {
   const tasks = dependencies.tasks ?? new PrismaTaskRepository();
   const attachmentStorage =
     dependencies.attachmentStorage ??
-    new LocalAttachmentStorage(env.UPLOAD_DIRECTORY);
+    createAttachmentStorage({
+      mode: env.ATTACHMENT_STORAGE,
+      uploadDirectory: env.UPLOAD_DIRECTORY,
+      awsRegion: env.AWS_REGION,
+      s3Bucket: env.S3_BUCKET,
+      s3KeyPrefix: env.S3_KEY_PREFIX,
+    });
   const authService = new AuthService(identities);
   const commentService = new CommentService(comments);
   const dashboardService = new DashboardService(dashboard);
@@ -77,11 +84,12 @@ export function createApp(dependencies: AppDependencies = {}) {
   );
 
   app.disable('x-powered-by');
+  app.use(pinoHttp({ logger }));
+  app.use('/api', createDocsRouter());
   app.use(helmet());
   app.use(cors({ origin: env.WEB_ORIGIN, credentials: true }));
   app.use(express.json({ limit: '1mb' }));
   app.use(cookieParser());
-  app.use(pinoHttp({ logger }));
 
   app.use('/api/v1/health', healthRouter);
   app.use('/api/v1/auth', createAuthRouter(authService, identities));

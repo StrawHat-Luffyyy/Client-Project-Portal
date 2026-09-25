@@ -4,7 +4,7 @@ Last updated: 2026-09-25
 
 ## Current phase
 
-Phase 8 — Dashboards, polish, and empty/error states: complete.
+Phase 9 — Release readiness: application and local deployment verification complete; public AWS rollout pending account-specific infrastructure and credentials.
 
 ## Completed
 
@@ -70,6 +70,14 @@ Phase 8 — Dashboards, polish, and empty/error states: complete.
 - reusable retryable query error state on dashboard, admin, board, project, requirement, and activity views
 - actionable empty states, a recovery-oriented 404 page, skip navigation, live unread announcements, and wrapped mobile navigation
 - responsive task board columns without horizontal page scrolling
+- Playwright Chromium coverage for the full client submission, PM approval/task creation, engineer task start, and live client status update workflow
+- Playwright cross-client isolation coverage against the real Docker Compose stack
+- public OpenAPI 3.1 document and interactive Swagger UI for the complete API surface
+- private S3 attachment adapter with encrypted writes, compensating deletes, configuration validation, and unit tests
+- CI browser-test job with Compose lifecycle, failure logs, and Playwright report artifacts
+- main-branch AWS deployment job using GitHub OIDC, immutable ECR image tags, one-off Fargate migrations, and ECS service stability checks
+- ECS Fargate task-definition templates for the API and web services
+- complete AWS deployment, verification, rollback, secrets, networking, RDS, S3, and observability runbook
 
 ## Verification
 
@@ -203,6 +211,24 @@ Phase 8 verification completed on 2026-09-25:
 - 375px mobile and landscape layouts — no horizontal page overflow; navigation and metric cards reflowed correctly
 - accessible progress values, skip navigation, live notification count, and not-found recovery — verified in the rendered UI
 
-## Next phase
+Phase 9 local verification completed on 2026-09-25:
 
-Phase 9 — end-to-end tests, final documentation, and deployment.
+- `pnpm lint` — passed across shared, API, and web workspaces
+- `pnpm typecheck` — passed across shared, API, and web workspaces
+- `pnpm test` — passed with 55 API/unit tests across 13 files
+- `pnpm build` — passed for shared, API, and web packages
+- `prettier --check .` — passed
+- Playwright Chromium — 2 passed against the rebuilt Docker Compose stack
+- full CLIENT → PM → ENGINEER → live CLIENT update workflow — passed
+- direct CLIENT access to the other seeded client's project — concealed and passed
+- API and web Docker images — rebuilt successfully
+- Docker Compose PostgreSQL and API health checks — passed; web smoke request returned HTTP 200
+- `GET /api/v1/openapi.json` — returned OpenAPI 3.1 from the rebuilt API container
+- `/api/docs` Swagger UI — returned HTTP 200 with the expected portal API title
+- S3 adapter tests — encrypted put, randomized prefixed key, and compensating delete passed
+- `docker compose config --quiet` — passed
+- public AWS URL and production smoke test — pending target AWS account, DNS, networking, IAM/OIDC role, ECS/RDS/S3 resources, and GitHub deployment variables
+
+## Remaining release handoff
+
+Provision or identify the AWS resources documented in `docs/deploy.md`, configure the GitHub `production` environment variables, merge to `main`, and record the resulting public URL after the deployment and production Playwright smoke test pass.

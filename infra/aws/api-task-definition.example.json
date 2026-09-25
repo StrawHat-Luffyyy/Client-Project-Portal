@@ -1,0 +1,56 @@
+{
+  "family": "client-portal-api",
+  "networkMode": "awsvpc",
+  "requiresCompatibilities": ["FARGATE"],
+  "cpu": "512",
+  "memory": "1024",
+  "executionRoleArn": "REPLACE_ECS_EXECUTION_ROLE_ARN",
+  "taskRoleArn": "REPLACE_API_TASK_ROLE_ARN",
+  "containerDefinitions": [
+    {
+      "name": "api",
+      "image": "REPLACE_ACCOUNT_ID.dkr.ecr.REPLACE_REGION.amazonaws.com/client-project-portal-api:bootstrap",
+      "essential": true,
+      "portMappings": [
+        { "containerPort": 4000, "hostPort": 4000, "protocol": "tcp" }
+      ],
+      "command": ["node", "apps/api/dist/src/server.js"],
+      "environment": [
+        { "name": "NODE_ENV", "value": "production" },
+        { "name": "API_PORT", "value": "4000" },
+        { "name": "COOKIE_SECURE", "value": "true" },
+        { "name": "ATTACHMENT_STORAGE", "value": "s3" },
+        { "name": "AWS_REGION", "value": "REPLACE_REGION" },
+        { "name": "S3_BUCKET", "value": "REPLACE_ATTACHMENT_BUCKET" },
+        { "name": "S3_KEY_PREFIX", "value": "production/attachments" },
+        { "name": "WEB_ORIGIN", "value": "https://REPLACE_PORTAL_HOST" }
+      ],
+      "secrets": [
+        {
+          "name": "DATABASE_URL",
+          "valueFrom": "REPLACE_DATABASE_URL_SECRET_ARN"
+        },
+        { "name": "JWT_SECRET", "valueFrom": "REPLACE_JWT_SECRET_ARN" },
+        { "name": "CSRF_SECRET", "valueFrom": "REPLACE_CSRF_SECRET_ARN" }
+      ],
+      "healthCheck": {
+        "command": [
+          "CMD-SHELL",
+          "wget -q -O - http://localhost:4000/api/v1/health || exit 1"
+        ],
+        "interval": 30,
+        "timeout": 5,
+        "retries": 3,
+        "startPeriod": 60
+      },
+      "logConfiguration": {
+        "logDriver": "awslogs",
+        "options": {
+          "awslogs-group": "/ecs/client-project-portal/api",
+          "awslogs-region": "REPLACE_REGION",
+          "awslogs-stream-prefix": "ecs"
+        }
+      }
+    }
+  ]
+}

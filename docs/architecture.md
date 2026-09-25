@@ -33,7 +33,7 @@ The access JWT is stored in an `httpOnly`, `SameSite=Lax` cookie. State-changing
 - IDs are CUID strings. They are opaque to clients and do not replace authorization checks.
 - User email is globally unique, matching the starting model in the brief. This keeps login unambiguous for the MVP.
 - Comments support one optional parent, which provides the requested threaded-lite behavior without arbitrary discussion-tree features.
-- Phase 3 attachments use a local `uploads` directory through an attachment-storage interface. Files are limited to 10 MB and an allowlist of common business formats, receive random storage keys, and are removed if the database transaction fails. The deployment phase provides the S3 implementation.
+- Attachments use a storage interface with local-disk and private S3 adapters. Files are limited to 10 MB and an allowlist of common business formats, receive random storage keys, and are removed if the database transaction fails. S3 objects use AES-256 server-side encryption and an environment-specific key prefix.
 - ADMIN and PM users may create clients and projects. CLIENT users submit requirements only to projects belonging to their authenticated client account. Requirement content can be edited by its submitting client while `SUBMITTED` or `NEEDS_INFO`; status changes are reserved for the Phase 4 transition service.
 - PM triage allows only `SUBMITTED -> IN_REVIEW`, `IN_REVIEW -> NEEDS_INFO | APPROVED | REJECTED`, and `NEEDS_INFO -> IN_REVIEW`. `NEEDS_INFO` and `REJECTED` require a client-visible reason. `APPROVED -> IN_PROGRESS` remains automatic when Phase 5 starts the first task, and delivery remains a separate PM confirmation after all tasks are done.
 - PMs create the complete task breakdown while a requirement is `APPROVED`. New task requests require a UUID idempotency key, enforced by a composite organization/key uniqueness constraint, so a retry returns the original task instead of duplicating work. PMs may edit task details only while the task remains `TODO`.
@@ -51,6 +51,8 @@ The access JWT is stored in an `httpOnly`, `SameSite=Lax` cookie. State-changing
 - The UI direction is a restrained light B2B interface: high contrast, compact information density, visible keyboard focus, and reduced-motion support.
 - Authentication cookies are `httpOnly`, `SameSite=Lax`, and secure by default in production. Local HTTP Compose explicitly sets `COOKIE_SECURE=false`; deployed environments must not use that override.
 - Invitation delivery is manual for the MVP: the API and ADMIN dashboard display the invite link instead of sending email.
+- Production uses two ECS Fargate services behind one TLS Application Load Balancer: `/api/*` routes to Express and the default route goes to Next.js. RDS and ECS tasks remain in private subnets; only the load balancer is public. GitHub Actions assumes a narrowly scoped AWS role through OIDC and deploys immutable commit-SHA images.
+- The deployment workflow runs `prisma migrate deploy` as a one-off Fargate task and waits for it to succeed before updating the API service. This keeps migrations single-run and coupled to the release without a separate migration host. Seed data is never run automatically in production.
 
 ## Reliability model
 

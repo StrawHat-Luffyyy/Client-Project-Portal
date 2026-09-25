@@ -262,8 +262,8 @@ export function RequirementTasks({
                 step="0.25"
                 type="number"
                 {...form.register('estimateHours', {
-                  setValueAs: (value: string) =>
-                    value === '' ? null : Number(value),
+                  setValueAs: (value: string | null) =>
+                    value === '' || value === null ? null : Number(value),
                 })}
               />
             </FormField>
@@ -274,7 +274,7 @@ export function RequirementTasks({
               <TextInput
                 type="date"
                 {...form.register('dueDate', {
-                  setValueAs: (value: string) => value || null,
+                  setValueAs: (value: string | null) => value || null,
                 })}
               />
             </FormField>

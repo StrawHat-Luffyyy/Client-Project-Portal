@@ -4,7 +4,7 @@ A production-style, multi-tenant project operations portal for clients, project 
 
 ## Status
 
-Phase 8 is complete and verified locally with Docker Compose: every role now has a scoped delivery dashboard with project progress, requirement health, and recent activity, alongside consistent loading, empty, error-recovery, responsive, and not-found states. See `PROJECT_STATE.md`.
+Phase 9 release-readiness work is implemented locally: Playwright covers the complete cross-role workflow and client isolation, OpenAPI/Swagger documentation is served by the API, attachments support private S3 storage, and GitHub Actions can deploy immutable images to ECS Fargate. The final public AWS rollout requires the target account values listed in `docs/deploy.md`. See `PROJECT_STATE.md` for current verification evidence.
 
 ## Architecture
 
@@ -52,13 +52,14 @@ Alternatively, start the complete container stack with `docker compose up --buil
 | `API_PORT`                | Express listen port; defaults to `4000`     |
 | `WEB_ORIGIN`              | Allowed credentialed browser origin         |
 | `NEXT_PUBLIC_API_URL`     | Browser-visible API base URL                |
-| `JWT_SECRET`              | Access-token signing secret (phase 2)       |
-| `CSRF_SECRET`             | CSRF-token secret (phase 2)                 |
+| `JWT_SECRET`              | Access-token signing secret                 |
+| `CSRF_SECRET`             | CSRF-token secret                           |
 | `JWT_EXPIRES_IN_SECONDS`  | Access-cookie lifetime; defaults to 8 hours |
 | `COOKIE_SECURE`           | Secure-cookie override for local HTTP only  |
-| `ATTACHMENT_STORAGE`      | Attachment adapter; currently `local`       |
+| `ATTACHMENT_STORAGE`      | Attachment adapter: `local` or `s3`         |
 | `UPLOAD_DIRECTORY`        | Local attachment directory                  |
-| `AWS_REGION`, `S3_BUCKET` | Production attachment storage settings      |
+| `AWS_REGION`, `S3_BUCKET` | Production S3 attachment settings           |
+| `S3_KEY_PREFIX`           | Environment-specific S3 object prefix       |
 
 Never commit a populated `.env` file.
 
@@ -68,6 +69,7 @@ Never commit a populated `.env` file.
 pnpm lint
 pnpm typecheck
 pnpm test
+pnpm test:e2e
 pnpm build
 pnpm db:migrate
 pnpm db:seed
@@ -108,9 +110,11 @@ All endpoints use `/api/v1` and the standard error envelope.
 
 State-changing requests require the CSRF token from `/auth/csrf` in the `x-csrf-token` header. Browser requests must include credentials. Requirement creation accepts `multipart/form-data` with an optional `attachment` field; supported files are PDF, Word, text, PNG, and JPEG up to 10 MB.
 
+Interactive Swagger documentation is available at `/api/docs`; the machine-readable OpenAPI document is at `/api/v1/openapi.json`.
+
 ## Demo credentials
 
-The seed creates these planned phase-2 accounts with password `DemoPass123!`:
+The seed creates these demo accounts with password `DemoPass123!`:
 
 | Role     | Email                 |
 | -------- | --------------------- |
@@ -135,14 +139,14 @@ The current workflow supports: ADMIN/PM creates a client and project → ADMIN i
 
 ## Deployment summary
 
-Local development uses Docker Compose. The production target is ECS Fargate, RDS PostgreSQL, S3, an Application Load Balancer, and AWS-managed secrets. See `docs/deploy.md`.
+Local development uses Docker Compose. Production uses ECS Fargate, RDS PostgreSQL, private S3 storage, an Application Load Balancer, CloudWatch, and AWS-managed secrets. After one-time AWS provisioning, merges to `main` verify the workspace and browser workflows, push commit-SHA images to ECR, and roll both ECS services. See `docs/deploy.md`.
 
 ## Tradeoffs and decisions
 
 - Modular monolith over microservices: simpler transactions and deployment fit the MVP.
 - SSE over WebSockets: the required realtime traffic is server-to-client.
 - Global unique email: matches the source model and makes tenant discovery during login unnecessary.
-- Local storage is implemented behind an attachment-storage interface for development and Compose. The S3 adapter is bound during the deployment phase without changing requirement services.
+- Local storage and private S3 are implemented behind the same attachment-storage interface. Production selects S3 through environment configuration without changing requirement services.
 - Request-information and rejection transitions require a reason and expose it in the activity timeline. This keeps client follow-up actionable; only rejection also persists the reason on the requirement itself.
 - Task status changes are forward-only and use a native dropdown on the board. This provides the brief's required status-change workflow with dependable keyboard access and without adding a drag-and-drop dependency.
 - Task creation requires a UUID idempotency key and is unique within an organization, preventing duplicate tasks from retries or double submissions.

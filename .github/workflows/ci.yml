@@ -27,22 +27,134 @@ jobs:
       - run: pnpm test
       - run: pnpm build
 
-  docker:
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+  e2e:
     needs: verify
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
-      - uses: docker/setup-buildx-action@v3
-      - uses: docker/build-push-action@v6
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11.9.0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm exec playwright install --with-deps chromium
+      - run: docker compose up --build --detach --wait
+      - run: pnpm test:e2e
+      - name: Upload Playwright report
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: playwright-report/
+          retention-days: 14
+      - name: Print container logs after a failure
+        if: failure()
+        run: docker compose logs --no-color
+      - name: Stop test stack
+        if: always()
+        run: docker compose down --volumes
+
+  deploy:
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    needs: e2e
+    runs-on: ubuntu-latest
+    environment: production
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate deployment configuration
+        env:
+          API_CONTAINER_NAME: ${{ vars.API_CONTAINER_NAME }}
+          AWS_REGION: ${{ vars.AWS_REGION }}
+          AWS_ROLE_ARN: ${{ vars.AWS_ROLE_ARN }}
+          ECR_API_REPOSITORY: ${{ vars.ECR_API_REPOSITORY }}
+          ECR_WEB_REPOSITORY: ${{ vars.ECR_WEB_REPOSITORY }}
+          ECS_API_SERVICE: ${{ vars.ECS_API_SERVICE }}
+          ECS_API_TASK_DEFINITION: ${{ vars.ECS_API_TASK_DEFINITION }}
+          ECS_CLUSTER: ${{ vars.ECS_CLUSTER }}
+          ECS_RUN_TASK_SECURITY_GROUPS: ${{ vars.ECS_RUN_TASK_SECURITY_GROUPS }}
+          ECS_RUN_TASK_SUBNETS: ${{ vars.ECS_RUN_TASK_SUBNETS }}
+          ECS_WEB_SERVICE: ${{ vars.ECS_WEB_SERVICE }}
+          ECS_WEB_TASK_DEFINITION: ${{ vars.ECS_WEB_TASK_DEFINITION }}
+          NEXT_PUBLIC_API_URL: ${{ vars.NEXT_PUBLIC_API_URL }}
+          WEB_CONTAINER_NAME: ${{ vars.WEB_CONTAINER_NAME }}
+        run: |
+          : "${API_CONTAINER_NAME:?Missing API_CONTAINER_NAME repository variable}"
+          : "${AWS_REGION:?Missing AWS_REGION repository variable}"
+          : "${AWS_ROLE_ARN:?Missing AWS_ROLE_ARN repository variable}"
+          : "${ECR_API_REPOSITORY:?Missing ECR_API_REPOSITORY repository variable}"
+          : "${ECR_WEB_REPOSITORY:?Missing ECR_WEB_REPOSITORY repository variable}"
+          : "${ECS_API_SERVICE:?Missing ECS_API_SERVICE repository variable}"
+          : "${ECS_API_TASK_DEFINITION:?Missing ECS_API_TASK_DEFINITION repository variable}"
+          : "${ECS_CLUSTER:?Missing ECS_CLUSTER repository variable}"
+          : "${ECS_RUN_TASK_SECURITY_GROUPS:?Missing ECS_RUN_TASK_SECURITY_GROUPS repository variable}"
+          : "${ECS_RUN_TASK_SUBNETS:?Missing ECS_RUN_TASK_SUBNETS repository variable}"
+          : "${ECS_WEB_SERVICE:?Missing ECS_WEB_SERVICE repository variable}"
+          : "${ECS_WEB_TASK_DEFINITION:?Missing ECS_WEB_TASK_DEFINITION repository variable}"
+          : "${NEXT_PUBLIC_API_URL:?Missing NEXT_PUBLIC_API_URL repository variable}"
+          : "${WEB_CONTAINER_NAME:?Missing WEB_CONTAINER_NAME repository variable}"
+      - uses: aws-actions/configure-aws-credentials@v5
+        with:
+          role-to-assume: ${{ vars.AWS_ROLE_ARN }}
+          aws-region: ${{ vars.AWS_REGION }}
+      - id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
+      - name: Build and push API image
+        uses: docker/build-push-action@v6
         with:
           context: .
           file: apps/api/Dockerfile
-          push: false
-          tags: client-project-portal-api:${{ github.sha }}
-      - uses: docker/build-push-action@v6
+          push: true
+          tags: ${{ steps.login-ecr.outputs.registry }}/${{ vars.ECR_API_REPOSITORY }}:${{ github.sha }}
+      - name: Build and push web image
+        uses: docker/build-push-action@v6
         with:
           context: .
           file: apps/web/Dockerfile
-          push: false
-          tags: client-project-portal-web:${{ github.sha }}
+          push: true
+          build-args: NEXT_PUBLIC_API_URL=${{ vars.NEXT_PUBLIC_API_URL }}
+          tags: ${{ steps.login-ecr.outputs.registry }}/${{ vars.ECR_WEB_REPOSITORY }}:${{ github.sha }}
+      - name: Download active task definitions
+        env:
+          API_TASK_DEFINITION: ${{ vars.ECS_API_TASK_DEFINITION }}
+          WEB_TASK_DEFINITION: ${{ vars.ECS_WEB_TASK_DEFINITION }}
+        run: |
+          aws ecs describe-task-definition --task-definition "$API_TASK_DEFINITION" --query taskDefinition > api-task-definition.json
+          aws ecs describe-task-definition --task-definition "$WEB_TASK_DEFINITION" --query taskDefinition > web-task-definition.json
+      - id: render-api
+        uses: aws-actions/amazon-ecs-render-task-definition@v1
+        with:
+          task-definition: api-task-definition.json
+          container-name: ${{ vars.API_CONTAINER_NAME }}
+          image: ${{ steps.login-ecr.outputs.registry }}/${{ vars.ECR_API_REPOSITORY }}:${{ github.sha }}
+      - id: render-web
+        uses: aws-actions/amazon-ecs-render-task-definition@v1
+        with:
+          task-definition: web-task-definition.json
+          container-name: ${{ vars.WEB_CONTAINER_NAME }}
+          image: ${{ steps.login-ecr.outputs.registry }}/${{ vars.ECR_WEB_REPOSITORY }}:${{ github.sha }}
+      - name: Deploy API service
+        uses: aws-actions/amazon-ecs-deploy-task-definition@v2
+        with:
+          task-definition: ${{ steps.render-api.outputs.task-definition }}
+          service: ${{ vars.ECS_API_SERVICE }}
+          cluster: ${{ vars.ECS_CLUSTER }}
+          run-task: true
+          run-task-container-overrides: '[{"name":"${{ vars.API_CONTAINER_NAME }}","command":["pnpm","--filter","@client-portal/api","exec","prisma","migrate","deploy"]}]'
+          run-task-subnets: ${{ vars.ECS_RUN_TASK_SUBNETS }}
+          run-task-security-groups: ${{ vars.ECS_RUN_TASK_SECURITY_GROUPS }}
+          wait-for-task-stopped: true
+          wait-for-service-stability: true
+      - name: Deploy web service
+        uses: aws-actions/amazon-ecs-deploy-task-definition@v2
+        with:
+          task-definition: ${{ steps.render-web.outputs.task-definition }}
+          service: ${{ vars.ECS_WEB_SERVICE }}
+          cluster: ${{ vars.ECS_CLUSTER }}
+          wait-for-service-stability: true
