@@ -59,7 +59,10 @@ jobs:
         run: docker compose down --volumes
 
   deploy:
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    # Disabled until AWS infrastructure and GitHub deployment variables are provisioned.
+    # To re-enable when ready for production deployment:
+    # if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    if: false
     needs: e2e
     runs-on: ubuntu-latest
     environment: production

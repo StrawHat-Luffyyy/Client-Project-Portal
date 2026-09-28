@@ -53,7 +53,7 @@ Set these GitHub repository or production-environment variables:
 | `WEB_CONTAINER_NAME`           | `web`                               |
 | `NEXT_PUBLIC_API_URL`          | `https://portal.example.com/api/v1` |
 
-No long-lived AWS access keys are required. The CI workflow fails early with the exact missing variable if deployment is not configured.
+No long-lived AWS access keys are required. The deploy job in `.github/workflows/ci.yml` is disabled (`if: false`) until the AWS infrastructure and deployment variables are provisioned. Once configured, re-enable the job condition to deploy on push to main; the validation step will ensure no variables are missed.
 
 ## CI/CD behavior
 
