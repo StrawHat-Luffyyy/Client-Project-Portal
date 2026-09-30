@@ -28,8 +28,8 @@ import {
 type CommentTargetType = 'requirements' | 'tasks';
 
 const visibilityStyles: Record<CommentVisibility, string> = {
-  INTERNAL: 'bg-violet-100 text-violet-800',
-  CLIENT_VISIBLE: 'bg-emerald-100 text-emerald-800',
+  INTERNAL: 'comment-internal',
+  CLIENT_VISIBLE: 'comment-client-visible',
 };
 
 function visibilityLabel(visibility: CommentVisibility) {
@@ -47,13 +47,13 @@ function CommentItem({
 }) {
   return (
     <li>
-      <article className="rounded-lg border border-slate-200 bg-white p-4">
+      <article className="comment-item">
         <div className="flex flex-wrap items-center justify-between gap-2">
           <p className="text-sm font-semibold text-slate-900">
             {comment.author.name}
           </p>
           <span
-            className={`rounded-full px-2 py-0.5 text-[0.7rem] font-semibold ${visibilityStyles[comment.visibility]}`}
+            className={`comment-visibility ${visibilityStyles[comment.visibility]}`}
           >
             {visibilityLabel(comment.visibility)}
           </span>
@@ -66,7 +66,7 @@ function CommentItem({
             {new Date(comment.createdAt).toLocaleString()}
           </time>
           <button
-            className="min-h-9 rounded-md px-2 text-xs font-semibold text-blue-700 hover:bg-blue-50 focus:outline-none focus:ring-2 focus:ring-blue-600/30"
+            className="min-h-11 rounded-md px-2 text-xs font-semibold text-blue-700 hover:bg-blue-50 focus:outline-none focus:ring-2 focus:ring-blue-600/30"
             onClick={() => onReply(comment)}
             type="button"
           >
@@ -78,13 +78,13 @@ function CommentItem({
         <ul className="ml-4 mt-2 grid gap-2 border-l-2 border-slate-200 pl-3 sm:ml-8">
           {replies.map((reply) => (
             <li key={reply.id}>
-              <article className="rounded-lg bg-slate-50 p-4">
+              <article className="comment-reply">
                 <div className="flex flex-wrap items-center justify-between gap-2">
                   <p className="text-sm font-semibold text-slate-900">
                     {reply.author.name}
                   </p>
                   <span
-                    className={`rounded-full px-2 py-0.5 text-[0.7rem] font-semibold ${visibilityStyles[reply.visibility]}`}
+                    className={`comment-visibility ${visibilityStyles[reply.visibility]}`}
                   >
                     {visibilityLabel(reply.visibility)}
                   </span>
@@ -179,13 +179,7 @@ export function CommentThread({
   }
 
   return (
-    <div
-      className={
-        compact
-          ? ''
-          : 'rounded-xl border border-slate-200 bg-white p-6 shadow-sm'
-      }
-    >
+    <div className={compact ? '' : 'panel p-5 sm:p-6'}>
       {!compact ? (
         <div>
           <h2 className="text-lg font-semibold text-slate-950">Discussion</h2>
@@ -240,7 +234,7 @@ export function CommentThread({
           </h3>
           {replyingTo ? (
             <button
-              className="min-h-9 rounded-md px-2 text-xs font-semibold text-slate-600 hover:bg-slate-100"
+              className="min-h-11 rounded-md px-2 text-xs font-semibold text-slate-600 hover:bg-slate-100"
               onClick={cancelReply}
               type="button"
             >

@@ -4,6 +4,7 @@ import {
   requirementTransitionSchema,
   type AuthUser,
   type RequirementActivity,
+  type Requirement,
   type RequirementStatus,
   type RequirementTransitionInput,
 } from '@client-portal/shared';
@@ -255,6 +256,210 @@ function TriagePanel({
 }
 
 function RequirementContent({
+  requirement,
+  requirementId,
+  user,
+}: {
+  requirement: Requirement;
+  requirementId: string;
+  user: AuthUser;
+}) {
+  const statusPath: RequirementStatus[] = [
+    'SUBMITTED',
+    'IN_REVIEW',
+    'APPROVED',
+    'IN_PROGRESS',
+    'DELIVERED',
+  ];
+  const currentStage =
+    requirement.status === 'NEEDS_INFO' ? 'IN_REVIEW' : requirement.status;
+  const currentIndex = statusPath.indexOf(currentStage);
+  const stageCopy =
+    user.role === 'CLIENT'
+      ? requirement.status === 'NEEDS_INFO'
+        ? 'Your team is waiting for more information from you.'
+        : requirement.status === 'SUBMITTED' ||
+            requirement.status === 'IN_REVIEW'
+          ? 'Your project manager is reviewing this request.'
+          : requirement.status === 'DELIVERED'
+            ? 'The project manager has confirmed delivery.'
+            : 'The engineering team is working through the approved tasks.'
+      : user.role === 'PM'
+        ? requirement.status === 'SUBMITTED' ||
+          requirement.status === 'IN_REVIEW' ||
+          requirement.status === 'NEEDS_INFO'
+          ? 'Review the request and decide the next triage step.'
+          : requirement.status === 'IN_PROGRESS'
+            ? 'Confirm delivery when all task work is complete.'
+            : 'This request has reached its final state.'
+        : requirement.status === 'DELIVERED' ||
+            requirement.status === 'REJECTED'
+          ? 'No further delivery action is expected.'
+          : 'Follow the task breakdown for the next engineering action.';
+  return (
+    <div className="space-y-5">
+      <section className="requirement-overview">
+        <div className="requirement-overview-top">
+          <div className="flex flex-wrap items-center gap-2">
+            <PriorityBadge priority={requirement.priority} />
+            <StatusBadge status={requirement.status} />
+          </div>
+          <Link
+            className="button-secondary"
+            href={`/projects/${requirement.projectId}`}
+          >
+            View project
+          </Link>
+        </div>
+        <div
+          aria-label="Requirement progress"
+          className="requirement-flow"
+          role="list"
+        >
+          {statusPath.map((status, index) => (
+            <div
+              aria-current={status === currentStage ? 'step' : undefined}
+              className={`requirement-flow-step${status === currentStage ? ' current' : index < currentIndex ? ' complete' : ''}`}
+              key={status}
+              role="listitem"
+            >
+              <span aria-hidden="true" className="requirement-flow-dot">
+                {index < currentIndex ? '✓' : index + 1}
+              </span>
+              <span>{status.replaceAll('_', ' ').toLowerCase()}</span>
+            </div>
+          ))}
+        </div>
+        {requirement.status === 'NEEDS_INFO' ? (
+          <p className="requirement-substate">
+            <span className="status-chip status-warning">
+              Needs information
+            </span>
+            <span>
+              This request returns to review when the client responds.
+            </span>
+          </p>
+        ) : requirement.status === 'REJECTED' ? (
+          <p className="requirement-substate">
+            <span className="status-chip status-danger">Rejected</span>
+            <span>This request is closed.</span>
+          </p>
+        ) : null}
+      </section>
+
+      <section aria-label="Next action" className="next-action-band">
+        <div className="next-action-copy">
+          <p className="operational-eyebrow">NEXT ACTION</p>
+          <h2 className="section-title">
+            {user.role === 'PM' &&
+            ['SUBMITTED', 'IN_REVIEW', 'NEEDS_INFO'].includes(
+              requirement.status,
+            )
+              ? 'Project manager review'
+              : user.role === 'CLIENT' && requirement.status === 'NEEDS_INFO'
+                ? 'Information requested'
+                : user.role === 'ENGINEER' &&
+                    requirement.status === 'IN_PROGRESS'
+                  ? 'Engineering delivery'
+                  : 'Current owner'}
+          </h2>
+          <p className="section-description">{stageCopy}</p>
+        </div>
+        {user.role === 'PM' ? (
+          <TriagePanel
+            requirementId={requirementId}
+            status={requirement.status}
+          />
+        ) : null}
+      </section>
+
+      <div className="grid items-start gap-5 xl:grid-cols-[minmax(0,1.55fr)_minmax(260px,.7fr)]">
+        <div className="grid min-w-0 gap-5">
+          <section className="panel p-5 sm:p-6">
+            <div className="flex flex-wrap gap-2">
+              <p className="m-0 text-xs font-bold uppercase tracking-[.09em] text-[#61748a]">
+                Request details
+              </p>
+            </div>
+            <p className="mt-3 whitespace-pre-wrap text-[15px] leading-7 text-[#34465a]">
+              {requirement.description}
+            </p>
+            {requirement.rejectionReason ? (
+              <div className="mt-5 rounded-md border border-[#f2c2c2] bg-[#fff5f5] p-4">
+                <h2 className="text-sm font-semibold text-[var(--color-danger)]">
+                  Rejection reason
+                </h2>
+                <p className="mt-1 whitespace-pre-wrap text-sm leading-6 text-[#7f1d1d]">
+                  {requirement.rejectionReason}
+                </p>
+              </div>
+            ) : null}
+            {requirement.attachments.length > 0 ? (
+              <div className="mt-5 border-t border-[#e8edf2] pt-4">
+                <h2 className="section-title">Attachments</h2>
+                <ul className="mt-3 grid gap-2">
+                  {requirement.attachments.map((attachment) => (
+                    <li
+                      className="rounded-md bg-[#f6f8fa] px-3 py-2 text-sm text-[#34465a]"
+                      key={attachment.id}
+                    >
+                      {attachment.fileName} ·{' '}
+                      {(attachment.size / 1024).toFixed(1)} KB
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ) : null}
+          </section>
+          <RequirementTasks
+            requirementId={requirementId}
+            requirementStatus={requirement.status}
+            user={user}
+          />
+          <CommentThread
+            targetId={requirementId}
+            targetType="requirements"
+            user={user}
+          />
+          <ActivityTimeline requirementId={requirementId} />
+        </div>
+        <aside className="grid content-start gap-5">
+          <section className="panel p-5">
+            <h2 className="section-title">Submission</h2>
+            <dl className="mt-4 grid gap-4 text-sm">
+              <div>
+                <dt className="text-xs text-[var(--color-muted-foreground)]">
+                  Submitted by
+                </dt>
+                <dd className="mt-1 font-semibold text-[var(--color-foreground)]">
+                  {requirement.createdBy.name}
+                </dd>
+              </div>
+              <div>
+                <dt className="text-xs text-[var(--color-muted-foreground)]">
+                  Created
+                </dt>
+                <dd className="mt-1 font-medium text-[#34465a]">
+                  {new Date(requirement.createdAt).toLocaleString()}
+                </dd>
+              </div>
+              <div>
+                <dt className="text-xs text-[var(--color-muted-foreground)]">
+                  Last updated
+                </dt>
+                <dd className="mt-1 font-medium text-[#34465a]">
+                  {new Date(requirement.updatedAt).toLocaleString()}
+                </dd>
+              </div>
+            </dl>
+          </section>
+        </aside>
+      </div>
+    </div>
+  );
+}
+
+function RequirementWorkspace({
   requirementId,
   user,
 }: {
@@ -268,17 +473,17 @@ function RequirementContent({
         await apiRequest<unknown>(`/requirements/${requirementId}`),
       ).data,
   });
-
-  if (requirement.isPending) {
+  if (requirement.isPending)
     return (
-      <p className="text-slate-600" aria-busy="true">
-        Loading requirement…
-      </p>
+      <main className="mx-auto max-w-6xl px-5 py-12" aria-busy="true">
+        <div className="h-7 w-48 animate-pulse rounded bg-[#e8edf2]" />
+        <div className="mt-5 h-40 animate-pulse rounded-lg bg-[#e8edf2]" />
+        <p className="sr-only">Loading requirement details</p>
+      </main>
     );
-  }
   if (requirement.isError)
     return (
-      <main className="mx-auto max-w-xl px-5 py-20 sm:px-8">
+      <main className="mx-auto max-w-xl px-5 py-20">
         <QueryError
           message={requirement.error.message}
           onRetry={() => void requirement.refetch()}
@@ -286,100 +491,19 @@ function RequirementContent({
         />
       </main>
     );
-
   return (
-    <div className="grid gap-6 lg:grid-cols-[1.4fr_0.6fr]">
-      <div className="space-y-6">
-        <section className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
-          <div className="flex flex-wrap gap-2">
-            <PriorityBadge priority={requirement.data.priority} />
-            <StatusBadge status={requirement.data.status} />
-          </div>
-          <h2 className="mt-5 text-sm font-semibold uppercase tracking-wide text-slate-500">
-            Description
-          </h2>
-          <p className="mt-2 whitespace-pre-wrap leading-7 text-slate-800">
-            {requirement.data.description}
-          </p>
-          {requirement.data.rejectionReason ? (
-            <div className="mt-6 rounded-lg border border-red-200 bg-red-50 p-4">
-              <h2 className="text-sm font-semibold text-red-950">
-                Rejection reason
-              </h2>
-              <p className="mt-1 whitespace-pre-wrap text-sm leading-6 text-red-800">
-                {requirement.data.rejectionReason}
-              </p>
-            </div>
-          ) : null}
-          {requirement.data.attachments.length > 0 ? (
-            <div className="mt-8 border-t border-slate-200 pt-5">
-              <h2 className="text-sm font-semibold text-slate-950">
-                Attachments
-              </h2>
-              <ul className="mt-3 grid gap-2">
-                {requirement.data.attachments.map((attachment) => (
-                  <li
-                    className="rounded-md bg-slate-50 px-3 py-2 text-sm text-slate-700"
-                    key={attachment.id}
-                  >
-                    {attachment.fileName} ·{' '}
-                    {(attachment.size / 1024).toFixed(1)} KB
-                  </li>
-                ))}
-              </ul>
-            </div>
-          ) : null}
-        </section>
-        <RequirementTasks
-          requirementId={requirementId}
-          requirementStatus={requirement.data.status}
-          user={user}
-        />
-        <CommentThread
-          targetId={requirementId}
-          targetType="requirements"
-          user={user}
-        />
-        <ActivityTimeline requirementId={requirementId} />
-      </div>
-      <aside className="space-y-6">
-        {user.role === 'PM' ? (
-          <TriagePanel
-            requirementId={requirementId}
-            status={requirement.data.status}
-          />
-        ) : null}
-        <section className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
-          <h2 className="text-lg font-semibold text-slate-950">Submission</h2>
-          <dl className="mt-4 grid gap-4 text-sm">
-            <div>
-              <dt className="text-slate-500">Submitted by</dt>
-              <dd className="mt-1 font-medium text-slate-900">
-                {requirement.data.createdBy.name}
-              </dd>
-            </div>
-            <div>
-              <dt className="text-slate-500">Created</dt>
-              <dd className="mt-1 font-medium text-slate-900">
-                {new Date(requirement.data.createdAt).toLocaleString()}
-              </dd>
-            </div>
-            <div>
-              <dt className="text-slate-500">Last updated</dt>
-              <dd className="mt-1 font-medium text-slate-900">
-                {new Date(requirement.data.updatedAt).toLocaleString()}
-              </dd>
-            </div>
-          </dl>
-          <Link
-            className="mt-6 inline-flex min-h-11 items-center rounded-md border border-slate-300 px-4 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-50"
-            href={`/projects/${requirement.data.projectId}`}
-          >
-            Return to project
-          </Link>
-        </section>
-      </aside>
-    </div>
+    <WorkspaceShell
+      description={`${requirement.data.createdBy.name} · Request in project workspace`}
+      title={requirement.data.title}
+      titleAriaLabel={`Requirement: ${requirement.data.title}`}
+      user={user}
+    >
+      <RequirementContent
+        requirement={requirement.data}
+        requirementId={requirementId}
+        user={user}
+      />
+    </WorkspaceShell>
   );
 }
 
@@ -391,13 +515,7 @@ export function RequirementDetailClient({
   return (
     <AuthenticatedScreen>
       {(user) => (
-        <WorkspaceShell
-          description="Review submitted context, control triage, and inspect the audit trail."
-          title="Requirement"
-          user={user}
-        >
-          <RequirementContent requirementId={requirementId} user={user} />
-        </WorkspaceShell>
+        <RequirementWorkspace requirementId={requirementId} user={user} />
       )}
     </AuthenticatedScreen>
   );

@@ -75,10 +75,8 @@ function RequirementForm({ projectId }: { projectId: string }) {
   });
 
   return (
-    <section className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
-      <h2 className="text-lg font-semibold text-slate-950">
-        Submit a requirement
-      </h2>
+    <section className="project-form-panel">
+      <h2 className="section-title">Submit a requirement</h2>
       <p className="mt-1 text-sm leading-6 text-slate-600">
         Describe the business outcome clearly. Your project team will review it
         next.
@@ -236,7 +234,7 @@ function ProjectContent({
             </div>
           ) : null}
           {requirements.data?.data.length === 0 ? (
-            <div className="mt-4 rounded-xl border border-dashed border-slate-300 bg-white p-8 text-center">
+            <div className="empty-state mt-4">
               <h3 className="font-semibold text-slate-950">
                 No requirements found
               </h3>
@@ -252,7 +250,7 @@ function ProjectContent({
           <div className="mt-4 grid gap-4">
             {requirements.data?.data.map((requirement) => (
               <Link
-                className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm transition-colors hover:border-blue-300"
+                className="requirement-list-item"
                 href={`/requirements/${requirement.id}`}
                 key={requirement.id}
               >

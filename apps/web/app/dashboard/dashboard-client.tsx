@@ -5,6 +5,14 @@ import type {
   Dashboard,
   RequirementStatus,
 } from '@client-portal/shared';
+import {
+  ArrowRight,
+  CheckCircle2,
+  CircleAlert,
+  ClipboardCheck,
+  FolderKanban,
+  MessageSquareText,
+} from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import Link from 'next/link';
 
@@ -24,117 +32,270 @@ const statusLabels: Record<RequirementStatus, string> = {
   DELIVERED: 'Delivered',
   REJECTED: 'Rejected',
 };
-
 const statusStyles: Record<RequirementStatus, string> = {
-  SUBMITTED: 'bg-slate-100 text-slate-700',
-  IN_REVIEW: 'bg-violet-100 text-violet-800',
-  NEEDS_INFO: 'bg-amber-100 text-amber-900',
-  APPROVED: 'bg-cyan-100 text-cyan-900',
-  IN_PROGRESS: 'bg-blue-100 text-blue-800',
-  DELIVERED: 'bg-emerald-100 text-emerald-800',
-  REJECTED: 'bg-red-100 text-red-800',
+  SUBMITTED: 'status-neutral',
+  IN_REVIEW: 'status-indigo',
+  NEEDS_INFO: 'status-warning',
+  APPROVED: 'status-teal',
+  IN_PROGRESS: 'status-info',
+  DELIVERED: 'status-success',
+  REJECTED: 'status-danger',
 };
-
 const activityLabels: Record<string, string> = {
-  REQUIREMENT_SUBMITTED: 'submitted the requirement',
-  REQUIREMENT_UPDATED: 'updated the requirement',
-  REQUIREMENT_STATUS_CHANGED: 'changed the requirement status',
+  REQUIREMENT_SUBMITTED: 'submitted a requirement',
+  REQUIREMENT_UPDATED: 'updated requirement details',
+  REQUIREMENT_STATUS_CHANGED: 'changed requirement status',
   TASK_CREATED: 'created a task',
   TASK_UPDATED: 'updated a task',
-  TASK_STATUS_CHANGED: 'changed a task status',
+  TASK_STATUS_CHANGED: 'moved a task',
   COMMENT_CREATED: 'added a comment',
 };
 
 function dashboardCopy(user: AuthUser) {
-  if (user.role === 'CLIENT') {
+  if (user.role === 'CLIENT')
     return {
-      title: `Welcome back, ${user.name}`,
+      title: `Welcome back, ${user.name.split(' ')[0]}`,
       description:
-        'Track delivery progress, requirement health, and recent client-safe activity across your projects.',
+        'Follow requests from submission through delivery across your active projects.',
       actionHref: '/projects',
-      actionLabel: 'View projects',
+      actionLabel: 'Open projects',
     };
-  }
-  if (user.role === 'ENGINEER') {
+  if (user.role === 'ENGINEER')
     return {
-      title: `Welcome back, ${user.name}`,
-      description:
-        'See progress and recent activity only for delivery work assigned to you.',
+      title: `Your delivery work`,
+      description: 'A focused view of the projects and tasks assigned to you.',
       actionHref: '/board',
-      actionLabel: 'Open task board',
+      actionLabel: 'Go to task board',
     };
-  }
   return {
-    title: `Welcome back, ${user.name}`,
+    title:
+      user.role === 'ADMIN' ? 'Organization overview' : 'Delivery overview',
     description:
-      'Monitor delivery health across clients, requirements, and project work.',
-    actionHref: '/projects',
-    actionLabel: 'Manage projects',
+      user.role === 'ADMIN'
+        ? 'A clear view of client work, request health, and recent delivery activity.'
+        : 'Triage incoming requests and keep project delivery moving.',
+    actionHref: user.role === 'ADMIN' ? '/admin' : '/projects',
+    actionLabel: user.role === 'ADMIN' ? 'Clients & team' : 'Review projects',
   };
 }
 
-function DashboardSkeleton() {
+function DashboardEmpty({ user }: { user: AuthUser }) {
+  const copy =
+    user.role === 'ENGINEER'
+      ? [
+          'Nothing assigned yet',
+          'When a project manager assigns delivery work, your active tasks will appear here.',
+        ]
+      : user.role === 'CLIENT'
+        ? [
+            'Your workspace is getting ready',
+            'Projects from your delivery team will appear here.',
+          ]
+        : [
+            'No delivery work yet',
+            'Add a client and project to start receiving and tracking requirements.',
+          ];
   return (
-    <div aria-busy="true" aria-live="polite" className="space-y-6">
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        {Array.from({ length: 4 }, (_, index) => (
-          <div
-            className="h-28 animate-pulse rounded-xl border border-slate-200 bg-slate-100"
-            key={index}
-          />
-        ))}
+    <section className="panel flex flex-col items-start gap-4 p-6 sm:p-8">
+      <span className="grid size-10 place-items-center rounded-lg bg-[#edf3fa] text-[#2459a6]">
+        <FolderKanban aria-hidden="true" className="size-5" />
+      </span>
+      <div>
+        <h2 className="section-title">{copy[0]}</h2>
+        <p className="section-description max-w-xl">{copy[1]}</p>
       </div>
-      <div className="grid gap-6 lg:grid-cols-[1.35fr_1fr]">
-        <div className="h-80 animate-pulse rounded-xl border border-slate-200 bg-slate-100" />
-        <div className="h-80 animate-pulse rounded-xl border border-slate-200 bg-slate-100" />
-      </div>
-      <p className="sr-only">Loading dashboard metrics</p>
-    </div>
-  );
-}
-
-function MetricCard({
-  label,
-  value,
-  note,
-}: {
-  label: string;
-  value: number | string;
-  note: string;
-}) {
-  return (
-    <section className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
-      <p className="text-sm font-medium text-slate-600">{label}</p>
-      <p className="mt-2 text-3xl font-semibold tracking-tight text-slate-950">
-        {value}
-      </p>
-      <p className="mt-1 text-xs leading-5 text-slate-500">{note}</p>
+      {user.role !== 'ENGINEER' ? (
+        <Link
+          className="button-secondary"
+          href={user.role === 'CLIENT' ? '/projects' : '/admin'}
+        >
+          Continue <ArrowRight aria-hidden="true" className="size-4" />
+        </Link>
+      ) : null}
     </section>
   );
 }
 
-function DashboardEmpty({ user }: { user: AuthUser }) {
-  const isEngineer = user.role === 'ENGINEER';
+function ProgressPanel({
+  dashboard,
+  user,
+}: {
+  dashboard: Dashboard;
+  user: AuthUser;
+}) {
   return (
-    <section className="rounded-xl border border-dashed border-slate-300 bg-white px-6 py-12 text-center">
-      <h2 className="text-xl font-semibold text-slate-950">
-        {isEngineer ? 'No assigned delivery work yet' : 'No project work yet'}
-      </h2>
-      <p className="mx-auto mt-2 max-w-lg text-sm leading-6 text-slate-600">
-        {isEngineer
-          ? 'Tasks assigned to you will appear here with their project progress and recent activity.'
-          : user.role === 'CLIENT'
-            ? 'Your organization team will add projects here. Once available, you can submit and track requirements.'
-            : 'Create a client and project to start tracking requirements and delivery progress.'}
-      </p>
-      {!isEngineer ? (
+    <section className="panel overflow-hidden">
+      <header className="panel-header flex items-center justify-between gap-4">
+        <div>
+          <h2 className="section-title">
+            {user.role === 'CLIENT'
+              ? 'Your projects'
+              : user.role === 'ENGINEER'
+                ? 'Assigned project'
+                : 'Project delivery'}
+          </h2>
+          <p className="section-description">
+            Task progress and active requirement volume
+          </p>
+        </div>
         <Link
-          className="mt-6 inline-flex min-h-11 cursor-pointer items-center rounded-md bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-600/30 focus:ring-offset-2"
-          href={user.role === 'CLIENT' ? '/projects' : '/admin'}
+          className="text-link text-sm"
+          href={user.role === 'ENGINEER' ? '/board' : '/projects'}
         >
-          {user.role === 'CLIENT' ? 'Check projects' : 'Set up a client'}
+          View all
         </Link>
+      </header>
+      {dashboard.projectProgress.length ? (
+        <ul className="divide-y divide-[#e8edf2]">
+          {dashboard.projectProgress.map((project) => {
+            const completion = project.totalTasks
+              ? Math.round((project.doneTasks / project.totalTasks) * 100)
+              : 0;
+            return (
+              <li className="px-5 py-4 sm:px-6" key={project.id}>
+                <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
+                  <Link
+                    className="font-semibold text-[var(--color-foreground)] hover:text-[var(--color-primary)]"
+                    href={
+                      user.role === 'ENGINEER'
+                        ? '/board'
+                        : `/projects/${project.id}`
+                    }
+                  >
+                    {project.name}
+                  </Link>
+                  <span className="text-xs font-semibold tabular-nums text-[var(--color-muted-foreground)]">
+                    {project.doneTasks} of {project.totalTasks} tasks done
+                  </span>
+                </div>
+                <div className="mt-2 flex flex-wrap items-center justify-between gap-2 text-xs text-[var(--color-muted-foreground)]">
+                  <span>
+                    {project.clientName}{' '}
+                    <span className="px-1 text-[#9aa6b2]">·</span>{' '}
+                    {project.requirementCount}{' '}
+                    {project.requirementCount === 1
+                      ? 'requirement'
+                      : 'requirements'}
+                  </span>
+                  <span>
+                    {project.totalTasks ? `${completion}%` : 'Not started'}
+                  </span>
+                </div>
+                <div
+                  aria-label={`${project.name} task completion`}
+                  aria-valuemax={100}
+                  aria-valuemin={0}
+                  aria-valuenow={completion}
+                  className="mt-2 h-1.5 overflow-hidden rounded-full bg-[#e8edf2]"
+                  role="progressbar"
+                >
+                  <div
+                    className="h-full rounded-full bg-[#4775ad] transition-[width] duration-200 motion-reduce:transition-none"
+                    style={{ width: `${completion}%` }}
+                  />
+                </div>
+              </li>
+            );
+          })}
+        </ul>
+      ) : (
+        <p className="px-5 py-6 text-sm text-[var(--color-muted-foreground)]">
+          No projects are available yet.
+        </p>
+      )}
+    </section>
+  );
+}
+
+function StatusPanel({
+  dashboard,
+  user,
+}: {
+  dashboard: Dashboard;
+  user: AuthUser;
+}) {
+  const visible = dashboard.requirementStatuses.filter(
+    (item) => item.count > 0,
+  );
+  return (
+    <section className="panel p-5">
+      <h2 className="section-title">
+        {user.role === 'CLIENT' ? 'Request status' : 'Triage queue'}
+      </h2>
+      <p className="section-description">
+        {user.role === 'CLIENT'
+          ? 'Where your requests are in the delivery process'
+          : 'Requirements across your authorized projects'}
+      </p>
+      <ul className="mt-5 grid gap-2.5">
+        {visible.map(({ status, count }) => (
+          <li className="flex items-center justify-between gap-4" key={status}>
+            <span className={`status-chip ${statusStyles[status]}`}>
+              {statusLabels[status]}
+            </span>
+            <span className="font-semibold tabular-nums text-[var(--color-foreground)]">
+              {count}
+            </span>
+          </li>
+        ))}
+      </ul>
+      {!visible.length ? (
+        <p className="mt-5 text-sm text-[var(--color-muted-foreground)]">
+          No requirements to report yet.
+        </p>
       ) : null}
+    </section>
+  );
+}
+
+function ActivityPanel({ dashboard }: { dashboard: Dashboard }) {
+  return (
+    <section className="panel overflow-hidden">
+      <header className="panel-header">
+        <h2 className="section-title">Latest activity</h2>
+        <p className="section-description">
+          Recent updates you’re authorized to see
+        </p>
+      </header>
+      {dashboard.recentActivity.length ? (
+        <ol className="divide-y divide-[#e8edf2]">
+          {dashboard.recentActivity.map((activity) => (
+            <li className="flex gap-3 px-5 py-3.5 sm:px-6" key={activity.id}>
+              <span className="mt-1 grid size-7 flex-none place-items-center rounded-full bg-[#edf3fa] text-[#42668f]">
+                <MessageSquareText aria-hidden="true" className="size-3.5" />
+              </span>
+              <div className="min-w-0 flex-1">
+                <p className="m-0 text-sm leading-5 text-[#45576b]">
+                  <span className="font-semibold text-[var(--color-foreground)]">
+                    {activity.actor.name}
+                  </span>{' '}
+                  {activityLabels[activity.action] ?? 'updated work'} on{' '}
+                  <Link
+                    className="text-link"
+                    href={`/requirements/${activity.requirementId}`}
+                  >
+                    {activity.requirementTitle}
+                  </Link>
+                  <span className="text-[var(--color-muted-foreground)]">
+                    {' '}
+                    in {activity.projectName}
+                  </span>
+                </p>
+                <time
+                  className="mt-1 block text-xs text-[var(--color-muted-foreground)]"
+                  dateTime={activity.createdAt}
+                >
+                  {new Date(activity.createdAt).toLocaleString()}
+                </time>
+              </div>
+            </li>
+          ))}
+        </ol>
+      ) : (
+        <p className="px-5 py-6 text-sm text-[var(--color-muted-foreground)]">
+          No activity has been recorded yet.
+        </p>
+      )}
     </section>
   );
 }
@@ -150,178 +311,91 @@ function DashboardContent({
   const completion = dashboard.totals.tasks
     ? Math.round((dashboard.totals.doneTasks / dashboard.totals.tasks) * 100)
     : 0;
-  const visibleStatuses = dashboard.requirementStatuses.filter(
-    (status) => status.count > 0,
-  );
+  const pending = dashboard.requirementStatuses
+    .filter((item) => ['SUBMITTED', 'NEEDS_INFO'].includes(item.status))
+    .reduce((sum, item) => sum + item.count, 0);
+  const tasksOpen = dashboard.totals.tasks - dashboard.totals.doneTasks;
+  const isClient = user.role === 'CLIENT';
+  const isEngineer = user.role === 'ENGINEER';
+  const isAdmin = user.role === 'ADMIN';
+  const lead = isClient
+    ? {
+        icon: CircleAlert,
+        eyebrow: 'CLIENT WORKSPACE',
+        title: pending
+          ? `${pending} request${pending === 1 ? '' : 's'} need your attention`
+          : 'Your requests are with the delivery team',
+        note: `${dashboard.totals.projects} active ${dashboard.totals.projects === 1 ? 'project' : 'projects'} · ${dashboard.totals.requirements} total requests`,
+        link: '/projects',
+        linkText: pending ? 'Review requests' : 'Browse projects',
+        tone: pending ? 'attention' : 'calm',
+      }
+    : isEngineer
+      ? {
+          icon: ClipboardCheck,
+          eyebrow: 'MY ASSIGNMENTS',
+          title: tasksOpen
+            ? `${tasksOpen} task${tasksOpen === 1 ? '' : 's'} in progress`
+            : 'Your assigned tasks are complete',
+          note: `${dashboard.totals.doneTasks} of ${dashboard.totals.tasks} assigned tasks done · ${dashboard.totals.projects} project${dashboard.totals.projects === 1 ? '' : 's'}`,
+          link: '/board',
+          linkText: 'Open my task board',
+          tone: 'calm',
+        }
+      : {
+          icon: isAdmin ? FolderKanban : CircleAlert,
+          eyebrow: isAdmin ? 'ORGANIZATION HEALTH' : 'TRIAGE QUEUE',
+          title: pending
+            ? `${pending} request${pending === 1 ? '' : 's'} waiting for action`
+            : 'No requests are waiting for triage',
+          note: `${dashboard.totals.projects} projects · ${dashboard.totals.tasks - dashboard.totals.doneTasks} open tasks · ${completion}% task completion`,
+          link: isAdmin ? '/admin' : '/projects',
+          linkText: isAdmin ? 'Manage workspace' : 'Open project queue',
+          tone: pending ? 'attention' : 'calm',
+        };
+  const LeadIcon = lead.icon;
 
   return (
-    <div className="space-y-6">
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <MetricCard
-          label={user.role === 'ENGINEER' ? 'Assigned projects' : 'Projects'}
-          note="Within your authorized workspace"
-          value={dashboard.totals.projects}
-        />
-        <MetricCard
-          label="Requirements"
-          note="Connected to the projects shown"
-          value={dashboard.totals.requirements}
-        />
-        <MetricCard
-          label={user.role === 'ENGINEER' ? 'Assigned tasks' : 'Tasks'}
-          note={`${dashboard.totals.doneTasks} completed`}
-          value={dashboard.totals.tasks}
-        />
-        <MetricCard
-          label="Task completion"
-          note="Completed tasks in the current scope"
-          value={`${completion}%`}
-        />
-      </div>
-
-      <div className="grid gap-6 lg:grid-cols-[1.35fr_1fr]">
-        <section className="rounded-xl border border-slate-200 bg-white shadow-sm">
-          <div className="border-b border-slate-200 px-5 py-4 sm:px-6">
-            <h2 className="text-lg font-semibold text-slate-950">
-              Project progress
-            </h2>
-            <p className="mt-1 text-sm text-slate-600">
-              Task completion and requirement volume by project.
-            </p>
-          </div>
-          <ul className="divide-y divide-slate-200">
-            {dashboard.projectProgress.map((project) => {
-              const projectCompletion = project.totalTasks
-                ? Math.round((project.doneTasks / project.totalTasks) * 100)
-                : 0;
-              return (
-                <li className="px-5 py-5 sm:px-6" key={project.id}>
-                  <div className="flex flex-wrap items-start justify-between gap-3">
-                    <div>
-                      <Link
-                        className="cursor-pointer font-semibold text-slate-950 transition-colors hover:text-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-600/30"
-                        href={
-                          user.role === 'ENGINEER'
-                            ? '/board'
-                            : `/projects/${project.id}`
-                        }
-                      >
-                        {project.name}
-                      </Link>
-                      <p className="mt-1 text-sm text-slate-500">
-                        {project.clientName} · {project.requirementCount}{' '}
-                        {project.requirementCount === 1
-                          ? 'requirement'
-                          : 'requirements'}
-                      </p>
-                    </div>
-                    <span className="text-sm font-semibold text-slate-700">
-                      {project.doneTasks}/{project.totalTasks} tasks
-                    </span>
-                  </div>
-                  <div
-                    aria-label={`${project.name} task completion`}
-                    aria-valuemax={100}
-                    aria-valuemin={0}
-                    aria-valuenow={projectCompletion}
-                    className="mt-4 h-2 overflow-hidden rounded-full bg-slate-200"
-                    role="progressbar"
-                  >
-                    <div
-                      className="h-full rounded-full bg-blue-600 transition-[width] duration-200 motion-reduce:transition-none"
-                      style={{ width: `${projectCompletion}%` }}
-                    />
-                  </div>
-                  <p className="mt-2 text-xs text-slate-500">
-                    {project.totalTasks === 0
-                      ? 'No tasks have been created yet.'
-                      : `${projectCompletion}% complete`}
-                  </p>
-                </li>
-              );
-            })}
-          </ul>
-        </section>
-
-        <section className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
-          <h2 className="text-lg font-semibold text-slate-950">
-            Requirement status
-          </h2>
-          <p className="mt-1 text-sm text-slate-600">
-            Current distribution across this workspace.
-          </p>
-          {visibleStatuses.length > 0 ? (
-            <ul className="mt-5 space-y-3">
-              {visibleStatuses.map((status) => (
-                <li
-                  className="flex items-center justify-between gap-4"
-                  key={status.status}
-                >
-                  <span
-                    className={`rounded-full px-2.5 py-1 text-xs font-semibold ${statusStyles[status.status]}`}
-                  >
-                    {statusLabels[status.status]}
-                  </span>
-                  <span className="font-semibold tabular-nums text-slate-950">
-                    {status.count}
-                  </span>
-                </li>
-              ))}
-            </ul>
-          ) : (
-            <p className="mt-5 rounded-lg bg-slate-50 p-4 text-sm text-slate-600">
-              No requirements have been submitted yet.
-            </p>
-          )}
-        </section>
-      </div>
-
-      <section className="rounded-xl border border-slate-200 bg-white shadow-sm">
-        <div className="border-b border-slate-200 px-5 py-4 sm:px-6">
-          <h2 className="text-lg font-semibold text-slate-950">
-            Recent activity
-          </h2>
-          <p className="mt-1 text-sm text-slate-600">
-            Latest updates across requirements you can access.
-          </p>
+    <div className="space-y-5">
+      <section className={`operational-lead ${lead.tone}`}>
+        <div className="operational-lead-icon">
+          <LeadIcon aria-hidden="true" className="size-5" />
         </div>
-        {dashboard.recentActivity.length > 0 ? (
-          <ol className="divide-y divide-slate-200">
-            {dashboard.recentActivity.map((activity) => (
-              <li className="px-5 py-4 sm:px-6" key={activity.id}>
-                <div className="flex flex-col gap-1 sm:flex-row sm:items-start sm:justify-between sm:gap-5">
-                  <p className="text-sm leading-6 text-slate-700">
-                    <span className="font-semibold text-slate-950">
-                      {activity.actor.name}
-                    </span>{' '}
-                    {activityLabels[activity.action] ?? 'updated the work'} on{' '}
-                    <Link
-                      className="cursor-pointer font-semibold text-blue-700 hover:text-blue-800 focus:outline-none focus:ring-2 focus:ring-blue-600/30"
-                      href={`/requirements/${activity.requirementId}`}
-                    >
-                      {activity.requirementTitle}
-                    </Link>
-                    <span className="text-slate-500">
-                      {' '}
-                      in {activity.projectName}
-                    </span>
-                  </p>
-                  <time
-                    className="shrink-0 text-xs text-slate-500 sm:pt-1"
-                    dateTime={activity.createdAt}
-                  >
-                    {new Date(activity.createdAt).toLocaleString()}
-                  </time>
-                </div>
-              </li>
-            ))}
-          </ol>
-        ) : (
-          <p className="px-5 py-8 text-sm text-slate-600 sm:px-6">
-            No requirement activity has been recorded yet.
-          </p>
-        )}
+        <div className="min-w-0 flex-1">
+          <p className="operational-eyebrow">{lead.eyebrow}</p>
+          <h2 className="operational-title">{lead.title}</h2>
+          <p className="operational-note">{lead.note}</p>
+        </div>
+        <Link className="button-primary" href={lead.link}>
+          {lead.linkText}
+          <ArrowRight aria-hidden="true" className="size-4" />
+        </Link>
       </section>
+      <div className="grid items-start gap-5 xl:grid-cols-[minmax(0,1.6fr)_minmax(280px,.8fr)]">
+        <ProgressPanel dashboard={dashboard} user={user} />
+        <div className="grid gap-5">
+          <StatusPanel dashboard={dashboard} user={user} />
+          <section className="quick-facts">
+            <div className="quick-fact">
+              <span>Requirements</span>
+              <strong>{dashboard.totals.requirements}</strong>
+            </div>
+            <div className="quick-fact">
+              <span>{isEngineer ? 'My tasks' : 'Total tasks'}</span>
+              <strong>{dashboard.totals.tasks}</strong>
+            </div>
+            <div className="quick-fact">
+              <span>Completed</span>
+              <strong>{dashboard.totals.doneTasks}</strong>
+              <CheckCircle2
+                aria-hidden="true"
+                className="size-4 text-[var(--color-success)]"
+              />
+            </div>
+          </section>
+        </div>
+      </div>
+      <ActivityPanel dashboard={dashboard} />
     </div>
   );
 }
@@ -338,29 +412,39 @@ function DashboardWorkspace({ user }: { user: AuthUser }) {
   return (
     <WorkspaceShell
       actions={
-        <Link
-          className="inline-flex min-h-11 cursor-pointer items-center rounded-md bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-600/30 focus:ring-offset-2"
-          href={copy.actionHref}
-        >
+        <Link className="button-secondary" href={copy.actionHref}>
           {copy.actionLabel}
+          <ArrowRight aria-hidden="true" className="size-4" />
         </Link>
       }
       description={copy.description}
       title={copy.title}
       user={user}
     >
-      {dashboard.isPending ? <DashboardSkeleton /> : null}
+      {dashboard.isPending ? (
+        <div
+          aria-busy="true"
+          aria-live="polite"
+          className="grid gap-5 xl:grid-cols-[minmax(0,1.6fr)_minmax(280px,.8fr)]"
+        >
+          <div className="h-36 animate-pulse rounded-lg bg-[#e8edf2]" />
+          <div className="h-64 animate-pulse rounded-lg bg-[#e8edf2]" />
+          <p className="sr-only">Loading delivery overview</p>
+        </div>
+      ) : null}
       {dashboard.isError ? (
         <section
-          className="rounded-xl border border-red-200 bg-red-50 p-6"
+          className="rounded-lg border border-[#efcaca] bg-[#fff5f5] p-6"
           role="alert"
         >
-          <h2 className="text-lg font-semibold text-red-950">
+          <h2 className="section-title text-[var(--color-danger)]">
             Dashboard data is unavailable
           </h2>
-          <p className="mt-2 text-sm text-red-800">{dashboard.error.message}</p>
+          <p className="mt-2 text-sm text-[#7f1d1d]">
+            {dashboard.error.message}
+          </p>
           <button
-            className="mt-5 min-h-11 cursor-pointer rounded-md bg-red-700 px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-red-800 focus:outline-none focus:ring-2 focus:ring-red-700/30 focus:ring-offset-2"
+            className="button-secondary mt-4"
             onClick={() => void dashboard.refetch()}
             type="button"
           >

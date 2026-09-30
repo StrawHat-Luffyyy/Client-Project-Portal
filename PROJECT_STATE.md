@@ -1,10 +1,10 @@
 # Project State
 
-Last updated: 2026-09-25
+Last updated: 2026-09-26
 
 ## Current phase
 
-Phase 9 — Release readiness: application and local deployment verification complete; public AWS rollout pending account-specific infrastructure and credentials.
+Phase 10 — UI/UX redesign: complete locally; public AWS rollout still pending account-specific infrastructure and credentials.
 
 ## Completed
 
@@ -78,6 +78,13 @@ Phase 9 — Release readiness: application and local deployment verification com
 - main-branch AWS deployment job using GitHub OIDC, immutable ECR image tags, one-off Fargate migrations, and ECS service stability checks
 - ECS Fargate task-definition templates for the API and web services
 - complete AWS deployment, verification, rollback, secrets, networking, RDS, S3, and observability runbook
+- audited and redesigned the frontend without changing backend/API/data contracts, role policy, tenancy, transitions, notifications, or SSE behavior
+- role-aware desktop sidebar and responsive compact mobile navigation with Lucide iconography
+- operational dashboards tailored to client, engineer, PM, and admin workflows
+- requirement workspace with visible title, progression path, next action, work breakdown, discussion, and activity
+- compact task lanes, responsive mobile lane selector, shared status palette, controls, alerts, and activity/comments styling
+- product UI specification and pre-redesign browser audit documented
+- redesigned landing page, navbar, and footer with B2B SaaS product storytelling, realistic interactive preview components, and unified brand identity
 
 ## Verification
 
@@ -228,6 +235,19 @@ Phase 9 local verification completed on 2026-09-25:
 - S3 adapter tests — encrypted put, randomized prefixed key, and compensating delete passed
 - `docker compose config --quiet` — passed
 - public AWS URL and production smoke test — pending target AWS account, DNS, networking, IAM/OIDC role, ECS/RDS/S3 resources, and GitHub deployment variables
+
+Phase 10 UI/UX verification on 2026-09-26:
+
+- `pnpm lint` and `pnpm typecheck` — passed across all workspaces after redesign changes
+- `pnpm test` — passed with 55 API/unit tests across 13 files
+- `pnpm build` — passed for shared, API, and web packages
+- Docker web image — production Next.js build completed; Compose web/API/PostgreSQL healthy
+- Playwright screenshot audit — dashboard, project list/detail, requirement detail, board, admin, auth, and invitation views captured at the audited desktop/mobile breakpoints
+- role dashboards and responsive layouts visually inspected at 375px, 768px, 1024px, and 1440px
+- responsive audit assertions — no horizontal page overflow at 375px, 768px, 1024px, and 1440px
+- `pnpm test:e2e` — 3 passed, including the existing end-to-end workflow, cross-client isolation, and new screenshot audit; existing workflow test expectations were unchanged
+- final `pnpm lint`, `pnpm typecheck`, and `pnpm build` — passed across all workspaces
+- Docker Compose PostgreSQL, API, and web services — healthy after rebuilding the redesigned web image
 
 ## Remaining release handoff
 

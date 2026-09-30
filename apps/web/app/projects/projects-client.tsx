@@ -59,9 +59,9 @@ function ProjectForm() {
   });
 
   return (
-    <section className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
-      <h2 className="text-lg font-semibold text-slate-950">Create a project</h2>
-      <p className="mt-1 text-sm text-slate-600">
+    <section className="project-form-panel">
+      <h2 className="section-title">Create a project</h2>
+      <p className="section-description">
         Assign every project to an existing client account.
       </p>
       <form
@@ -129,16 +129,14 @@ function ProjectsContent({ canCreate }: { canCreate: boolean }) {
       className={`grid gap-6 ${canCreate ? 'lg:grid-cols-[1.25fr_0.75fr]' : ''}`}
     >
       <section>
-        <h2 className="text-lg font-semibold text-slate-950">
-          Project portfolio
-        </h2>
+        <h2 className="section-title">Project portfolio</h2>
         {projects.isPending ? (
           <p className="mt-4 text-slate-600" aria-busy="true">
             Loading projects…
           </p>
         ) : null}
         {projects.isError ? (
-          <div className="mt-4 rounded-xl border border-red-200 bg-red-50 p-5">
+          <div className="mt-4 rounded-md border border-[#f2c2c2] bg-[#fff5f5] p-5">
             <p className="text-sm text-red-800" role="alert">
               {projects.error.message}
             </p>
@@ -152,7 +150,7 @@ function ProjectsContent({ canCreate }: { canCreate: boolean }) {
           </div>
         ) : null}
         {projects.data?.data.length === 0 ? (
-          <div className="mt-4 rounded-xl border border-dashed border-slate-300 bg-white p-8 text-center">
+          <div className="empty-state mt-4">
             <h3 className="font-semibold text-slate-950">No projects yet</h3>
             <p className="mt-2 text-sm text-slate-600">
               {canCreate
@@ -164,7 +162,7 @@ function ProjectsContent({ canCreate }: { canCreate: boolean }) {
         <div className="mt-4 grid gap-4">
           {projects.data?.data.map((project) => (
             <Link
-              className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm transition-colors hover:border-blue-300"
+              className="project-list-item"
               href={`/projects/${project.id}`}
               key={project.id}
             >

@@ -3,7 +3,7 @@
 import type { AuthUser, Task, TaskStatus } from '@client-portal/shared';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import Link from 'next/link';
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 import { FormAlert, SelectInput } from '../../components/auth/form-controls';
 import {
@@ -51,7 +51,9 @@ function TaskCard({
   const [commentsOpen, setCommentsOpen] = useState(false);
   const next = nextStatus[task.status];
   return (
-    <article className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
+    <article
+      className={`task-card task-card-${task.status.toLowerCase().replaceAll('_', '-')}`}
+    >
       <p className="text-xs font-medium text-slate-500">
         {task.requirement.project.name}
       </p>
@@ -92,7 +94,7 @@ function TaskCard({
       <label className="mt-4 block border-t border-slate-100 pt-4 text-xs font-medium text-slate-600">
         Status
         <select
-          className="mt-2 min-h-10 w-full rounded-md border border-slate-300 bg-white px-2.5 text-sm capitalize text-slate-900 focus:border-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-600/20 disabled:bg-slate-100"
+          className="mt-2 min-h-11 w-full rounded-md border border-slate-300 bg-white px-2.5 text-sm capitalize text-slate-900 focus:border-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-600/20 disabled:bg-slate-100"
           disabled={!next}
           onChange={(event) => move(task.id, event.target.value as TaskStatus)}
           value={task.status}
@@ -127,6 +129,8 @@ function BoardContent({ user }: { user: AuthUser }) {
   const [projectId, setProjectId] = useState('');
   const [assigneeId, setAssigneeId] = useState('');
   const [success, setSuccess] = useState<string>();
+  const [mobileLane, setMobileLane] = useState<TaskStatus>('TODO');
+  const mobileLaneChosen = useRef(false);
   const query = new URLSearchParams({ pageSize: '100' });
   if (projectId) query.set('projectId', projectId);
   if (assigneeId) query.set('assigneeId', assigneeId);
@@ -137,6 +141,14 @@ function BoardContent({ user }: { user: AuthUser }) {
         await apiRequest<unknown>(`/tasks?${query.toString()}`),
       ).data,
   });
+  useEffect(() => {
+    if (!tasks.data || mobileLaneChosen.current) return;
+    const firstPopulated = columns.find((column) =>
+      tasks.data?.some((task) => task.status === column.status),
+    );
+    if (firstPopulated) setMobileLane(firstPopulated.status);
+    mobileLaneChosen.current = true;
+  }, [tasks.data]);
   const projects = useQuery({
     queryKey: ['projects', 'board-filter'],
     enabled: user.role === 'PM',
@@ -176,7 +188,7 @@ function BoardContent({ user }: { user: AuthUser }) {
   return (
     <>
       {user.role === 'PM' ? (
-        <section className="mb-6 grid gap-4 rounded-xl border border-slate-200 bg-white p-5 shadow-sm sm:grid-cols-2">
+        <section className="board-toolbar mb-5 grid gap-4 sm:grid-cols-2">
           <label className="text-sm font-medium text-slate-700">
             Project
             <SelectInput
@@ -209,6 +221,37 @@ function BoardContent({ user }: { user: AuthUser }) {
           </label>
         </section>
       ) : null}
+      {!tasks.isPending && !tasks.isError && tasks.data?.length ? (
+        <div
+          aria-label="Task status lane"
+          className="mobile-board-lane-picker"
+          role="group"
+        >
+          {columns.map((column) => {
+            const count =
+              tasks.data?.filter((task) => task.status === column.status)
+                .length ?? 0;
+            return (
+              <button
+                aria-pressed={mobileLane === column.status}
+                className={`lane-picker-button${mobileLane === column.status ? ' is-selected' : ''}`}
+                key={column.status}
+                onClick={() => {
+                  mobileLaneChosen.current = true;
+                  setMobileLane(column.status);
+                }}
+                type="button"
+              >
+                <span
+                  className={`board-lane-dot lane-dot-${column.status.toLowerCase().replaceAll('_', '-')}`}
+                />
+                {column.label}
+                <span className="board-lane-count">{count}</span>
+              </button>
+            );
+          })}
+        </div>
+      ) : null}
       <div className="mb-5 space-y-3">
         <FormAlert message={projects.error?.message} />
         <FormAlert message={assignees.error?.message} />
@@ -235,34 +278,37 @@ function BoardContent({ user }: { user: AuthUser }) {
           </p>
         </div>
       ) : (
-        <div className="grid gap-4 pb-2 sm:grid-cols-2 xl:grid-cols-4">
+        <div
+          aria-label="Task columns. Scroll horizontally to view each status lane."
+          className="board-lanes grid gap-4 pb-2 sm:grid-cols-2 xl:grid-cols-4"
+          tabIndex={0}
+        >
           {columns.map((column) => {
             const columnTasks =
               tasks.data?.filter((task) => task.status === column.status) ?? [];
             return (
               <section
-                className="rounded-xl bg-slate-100/80 p-3"
+                className={`board-lane board-lane-${column.status.toLowerCase().replaceAll('_', '-')}`}
+                data-mobile-active={mobileLane === column.status}
                 key={column.status}
               >
-                <div className="flex items-center justify-between px-1 py-2">
+                <div className="board-lane-heading">
                   <div className="flex items-center gap-2">
-                    <span
-                      aria-hidden="true"
-                      className={`size-2 rounded-full ${column.accent}`}
-                    />
+                    <span aria-hidden="true" className="board-lane-dot" />
                     <h2 className="text-sm font-semibold text-slate-900">
                       {column.label}
                     </h2>
                   </div>
-                  <span className="text-xs font-semibold text-slate-500">
+                  <span
+                    aria-label={`${columnTasks.length} tasks`}
+                    className="board-lane-count"
+                  >
                     {columnTasks.length}
                   </span>
                 </div>
                 <div className="mt-2 grid gap-3">
                   {columnTasks.length === 0 ? (
-                    <p className="rounded-lg border border-dashed border-slate-300 px-3 py-6 text-center text-xs text-slate-500">
-                      Empty
-                    </p>
+                    <p className="board-empty-lane">No tasks in this stage</p>
                   ) : (
                     columnTasks.map((task) => (
                       <TaskCard

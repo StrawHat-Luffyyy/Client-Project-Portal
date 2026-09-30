@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { ArrowRight, Check } from 'lucide-react';
 import type { ReactNode } from 'react';
 
 export function AuthShell({
@@ -19,50 +20,66 @@ export function AuthShell({
   alternateLabel?: string;
 }) {
   return (
-    <main className="grid min-h-screen bg-slate-50 lg:grid-cols-[0.85fr_1.15fr]">
-      <section className="hidden bg-slate-950 px-12 py-14 text-white lg:flex lg:flex-col lg:justify-between">
-        <Link className="w-fit text-sm font-semibold tracking-tight" href="/">
-          Client Project Portal
+    <main className="auth-layout">
+      <section className="auth-aside">
+        <Link className="auth-brand" href="/">
+          <span className="brand-mark" aria-hidden="true">
+            CP
+          </span>
+          <span>Client Project Portal</span>
         </Link>
-        <div className="max-w-lg pb-10">
-          <p className="text-sm font-semibold uppercase tracking-[0.14em] text-blue-300">
-            Shared delivery workspace
+        <div className="auth-aside-content">
+          <p className="auth-eyebrow">SHARED DELIVERY WORKSPACE</p>
+          <h2>From a clear request to confirmed delivery.</h2>
+          <p className="auth-aside-note">
+            One accountable path for client priorities, project review, and
+            engineering work.
           </p>
-          <p className="mt-5 text-4xl font-semibold leading-tight tracking-tight">
-            Clear requirements. Accountable delivery. No status chasing.
-          </p>
-          <p className="mt-5 max-w-md text-base leading-7 text-slate-300">
-            Keep client priorities and project execution connected without
-            exposing internal work.
-          </p>
+          <ol className="auth-flow">
+            <li>
+              <span className="auth-flow-number">01</span>
+              <span>
+                <strong>Client request</strong>
+                <small>Outcome and context</small>
+              </span>
+              <Check aria-hidden="true" className="size-4" />
+            </li>
+            <li>
+              <span className="auth-flow-number">02</span>
+              <span>
+                <strong>PM review</strong>
+                <small>Scope and next action</small>
+              </span>
+              <ArrowRight aria-hidden="true" className="size-4" />
+            </li>
+            <li>
+              <span className="auth-flow-number">03</span>
+              <span>
+                <strong>Engineering delivery</strong>
+                <small>Visible progress</small>
+              </span>
+              <ArrowRight aria-hidden="true" className="size-4" />
+            </li>
+          </ol>
         </div>
+        <p className="auth-aside-footer">
+          Private by design · Scoped to your workspace
+        </p>
       </section>
 
-      <section className="flex items-center justify-center px-5 py-12 sm:px-8">
-        <div className="w-full max-w-md">
-          <Link
-            className="mb-10 inline-block text-sm font-semibold text-slate-900 lg:hidden"
-            href="/"
-          >
+      <section className="auth-main">
+        <div className="auth-main-inner">
+          <Link className="auth-mobile-brand" href="/">
             Client Project Portal
           </Link>
-          <p className="text-sm font-semibold uppercase tracking-[0.14em] text-blue-700">
-            {eyebrow}
-          </p>
-          <h1 className="mt-3 text-3xl font-semibold tracking-tight text-slate-950">
-            {title}
-          </h1>
-          <p className="mt-3 leading-7 text-slate-600">{description}</p>
-          <div className="mt-8 rounded-xl border border-slate-200 bg-white p-6 shadow-sm sm:p-8">
-            {children}
-          </div>
+          <p className="auth-eyebrow auth-eyebrow-light">{eyebrow}</p>
+          <h1 className="auth-title">{title}</h1>
+          <p className="auth-description">{description}</p>
+          <div className="auth-form-panel">{children}</div>
           {alternateText && alternateHref && alternateLabel ? (
-            <p className="mt-6 text-center text-sm text-slate-600">
+            <p className="auth-alternate">
               {alternateText}{' '}
-              <Link
-                className="font-semibold text-blue-700 underline-offset-4 hover:underline"
-                href={alternateHref}
-              >
+              <Link className="text-link" href={alternateHref}>
                 {alternateLabel}
               </Link>
             </p>

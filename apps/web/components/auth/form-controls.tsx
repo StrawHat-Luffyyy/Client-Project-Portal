@@ -6,7 +6,7 @@ import type {
 } from 'react';
 
 const inputClassName =
-  'mt-2 min-h-11 w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-base text-slate-950 shadow-sm transition-colors placeholder:text-slate-400 hover:border-slate-400 focus:border-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-600/20';
+  'form-control mt-2 min-h-11 w-full rounded-md border bg-white px-3 py-2 text-base text-slate-950 transition-colors placeholder:text-slate-400';
 
 export function FormField({
   label,
@@ -26,11 +26,11 @@ export function FormField({
         {children}
       </label>
       {error ? (
-        <p className="mt-1.5 text-sm text-red-700" role="alert">
+        <p className="form-error" role="alert">
           {error}
         </p>
       ) : helper ? (
-        <p className="mt-1.5 text-sm text-slate-500">{helper}</p>
+        <p className="form-helper">{helper}</p>
       ) : null}
     </div>
   );
@@ -74,7 +74,7 @@ export function SubmitButton({
 }) {
   return (
     <button
-      className="min-h-11 w-full cursor-pointer rounded-md bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-blue-700 disabled:cursor-not-allowed disabled:bg-blue-400"
+      className="button-primary min-h-11 w-full disabled:cursor-not-allowed disabled:opacity-55"
       disabled={pending}
       type="submit"
     >
@@ -93,7 +93,7 @@ export function FormAlert({
   if (!message) return null;
   return (
     <div
-      className={`rounded-md border px-3 py-2.5 text-sm ${success ? 'border-emerald-200 bg-emerald-50 text-emerald-900' : 'border-red-200 bg-red-50 text-red-800'}`}
+      className={`form-alert ${success ? 'is-success' : 'is-error'}`}
       role={success ? 'status' : 'alert'}
     >
       {message}

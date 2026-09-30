@@ -1,5 +1,35 @@
-import { z } from 'zod';
+import { existsSync } from 'node:fs';
+import { resolve } from 'node:path';
 import { randomBytes } from 'node:crypto';
+import { z } from 'zod';
+
+const candidateEnvFiles = [
+  resolve(process.cwd(), '.env'),
+  resolve(process.cwd(), '../../.env'),
+  resolve(import.meta.dirname, '../../../.env'),
+  resolve(import.meta.dirname, '../../.env'),
+  resolve(import.meta.dirname, '../.env'),
+];
+
+for (const envFile of candidateEnvFiles) {
+  if (existsSync(envFile)) {
+    try {
+      process.loadEnvFile(envFile);
+      break;
+    } catch {
+      // Ignore parse errors or already loaded env
+    }
+  }
+}
+
+if (
+  !process.env.DATABASE_URL &&
+  process.env.NODE_ENV !== 'production' &&
+  process.env.NODE_ENV !== 'test'
+) {
+  process.env.DATABASE_URL =
+    'postgresql://portal:portal@localhost:5432/client_portal?schema=public';
+}
 
 const envSchema = z
   .object({
@@ -15,7 +45,11 @@ const envSchema = z
     ATTACHMENT_STORAGE: z.enum(['local', 's3']).default('local'),
     UPLOAD_DIRECTORY: z.string().min(1).default('./uploads'),
     AWS_REGION: z.string().min(1).default('us-east-1'),
-    S3_BUCKET: z.string().min(3).optional(),
+    S3_BUCKET: z
+      .string()
+      .trim()
+      .transform((val) => (val.length === 0 ? undefined : val))
+      .pipe(z.string().min(3).optional()),
     S3_KEY_PREFIX: z.string().trim().min(1).default('attachments'),
   })
   .superRefine((value, context) => {

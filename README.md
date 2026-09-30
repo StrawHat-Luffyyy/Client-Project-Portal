@@ -22,6 +22,8 @@ flowchart LR
 
 The backend is deliberately layered: route → controller → service → repository/Prisma → database. `organizationId` is the canonical tenancy key. See `docs/architecture.md` for boundaries and decisions.
 
+The product UI direction and audit baseline are recorded in [`design-system/client-project-portal/UI-SPEC.md`](design-system/client-project-portal/UI-SPEC.md) and [`docs/ui-ux-audit.md`](docs/ui-ux-audit.md).
+
 ## Local setup
 
 Requirements: Node.js 22+, pnpm 11, Docker, and Docker Compose.

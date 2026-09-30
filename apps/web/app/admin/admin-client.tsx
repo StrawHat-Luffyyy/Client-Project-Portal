@@ -66,8 +66,8 @@ function ClientForm() {
   });
 
   return (
-    <section className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
-      <h2 className="text-lg font-semibold text-slate-950">Add a client</h2>
+    <section className="project-form-panel">
+      <h2 className="section-title">Add a client</h2>
       <p className="mt-1 text-sm text-slate-600">
         Client accounts own projects and define client-user access boundaries.
       </p>
@@ -126,8 +126,8 @@ function InviteForm({ clients }: { clients: { id: string; name: string }[] }) {
   });
 
   return (
-    <section className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
-      <h2 className="text-lg font-semibold text-slate-950">Invite a user</h2>
+    <section className="project-form-panel">
+      <h2 className="section-title">Invite a user</h2>
       <p className="mt-1 text-sm text-slate-600">
         Invitation links are shown for manual sharing in the MVP.
       </p>
@@ -230,9 +230,7 @@ function AdminContent({ user }: { user: AuthUser }) {
     >
       <div className="grid gap-6 lg:grid-cols-[1fr_0.9fr]">
         <section>
-          <h2 className="text-lg font-semibold text-slate-950">
-            Client accounts
-          </h2>
+          <h2 className="section-title">Client accounts</h2>
           {clients.isPending ? (
             <p className="mt-4 text-slate-600" aria-busy="true">
               Loading clients…
@@ -248,7 +246,7 @@ function AdminContent({ user }: { user: AuthUser }) {
             </div>
           ) : null}
           {clients.data?.data.length === 0 ? (
-            <div className="mt-4 rounded-xl border border-dashed border-slate-300 bg-white p-8 text-center">
+            <div className="empty-state mt-4">
               <h3 className="font-semibold text-slate-950">No clients yet</h3>
               <p className="mt-2 text-sm text-slate-600">
                 Add the first client to begin creating projects.
@@ -257,10 +255,7 @@ function AdminContent({ user }: { user: AuthUser }) {
           ) : null}
           <div className="mt-4 grid gap-3">
             {clients.data?.data.map((client) => (
-              <article
-                className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm"
-                key={client.id}
-              >
+              <article className="client-account-item" key={client.id}>
                 <h3 className="font-semibold text-slate-950">{client.name}</h3>
                 <p className="mt-1 text-sm text-slate-600">
                   {client.contactEmail}
