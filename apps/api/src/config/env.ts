@@ -45,11 +45,11 @@ const envSchema = z
     ATTACHMENT_STORAGE: z.enum(['local', 's3']).default('local'),
     UPLOAD_DIRECTORY: z.string().min(1).default('./uploads'),
     AWS_REGION: z.string().min(1).default('us-east-1'),
-    S3_BUCKET: z
-      .string()
-      .trim()
-      .transform((val) => (val.length === 0 ? undefined : val))
-      .pipe(z.string().min(3).optional()),
+    S3_BUCKET: z.preprocess(
+      (val) =>
+        typeof val === 'string' && val.trim().length === 0 ? undefined : val,
+      z.string().min(3).optional(),
+    ),
     S3_KEY_PREFIX: z.string().trim().min(1).default('attachments'),
   })
   .superRefine((value, context) => {
