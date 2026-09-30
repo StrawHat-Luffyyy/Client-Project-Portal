@@ -1,6 +1,5 @@
 import { Navbar } from '../components/landing/navbar';
 import { Hero } from '../components/landing/hero';
-import { Workflow } from '../components/landing/workflow';
 import { ProductUI } from '../components/landing/product-ui';
 import { TruthSource } from '../components/landing/truth-source';
 import { Trust } from '../components/landing/trust';
@@ -12,7 +11,6 @@ export default function HomePage() {
     <main className="flex min-h-screen flex-col bg-slate-50 selection:bg-blue-100 selection:text-blue-900 font-sans">
       <Navbar />
       <Hero />
-      <Workflow />
       <ProductUI />
       <TruthSource />
       <Trust />

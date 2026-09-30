@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import {
   FileText,
   CheckSquare,
@@ -61,47 +61,21 @@ const workflowSteps = [
 export function TruthSource() {
   const [activeStep, setActiveStep] = useState(0);
   const [isHovered, setIsHovered] = useState(false);
-  const [isVisible, setIsVisible] = useState(false);
-  const sectionRef = useRef<HTMLElement>(null);
 
   useEffect(() => {
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        if (entry?.isIntersecting) {
-          setIsVisible(true);
-        }
-      },
-      { threshold: 0.2 },
-    );
-
-    if (sectionRef.current) {
-      observer.observe(sectionRef.current);
-    }
-
-    return () => observer.disconnect();
-  }, []);
-
-  useEffect(() => {
-    if (!isVisible || isHovered) return;
+    if (isHovered) return;
 
     const interval = setInterval(() => {
       setActiveStep((current) => (current + 1) % workflowSteps.length);
     }, 4500);
 
     return () => clearInterval(interval);
-  }, [isVisible, isHovered]);
+  }, [isHovered]);
 
   return (
-    <section
-      ref={sectionRef}
-      className="bg-white py-24 sm:py-32 border-t border-slate-200 overflow-hidden"
-    >
+    <section className="bg-white py-16 sm:py-24 border-t border-slate-200">
       <div className="mx-auto max-w-7xl px-6 lg:px-8">
-        <div
-          className={`mx-auto max-w-2xl lg:mx-0 transition-all duration-700 transform ${
-            isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
-          }`}
-        >
+        <div className="mx-auto max-w-2xl lg:mx-0">
           <h2 className="text-sm font-bold leading-7 text-blue-600 uppercase tracking-wider">
             One Workspace
           </h2>
@@ -117,11 +91,7 @@ export function TruthSource() {
         <div className="mt-16 grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
           {/* LEFT COLUMN: WORKFLOW NAV */}
           <div
-            className={`lg:col-span-5 flex flex-col gap-2 transition-all duration-700 delay-200 transform ${
-              isVisible
-                ? 'opacity-100 translate-x-0'
-                : 'opacity-0 -translate-x-8'
-            }`}
+            className="lg:col-span-5 flex flex-col gap-2"
             onMouseEnter={() => setIsHovered(true)}
             onMouseLeave={() => setIsHovered(false)}
           >
@@ -185,11 +155,7 @@ export function TruthSource() {
 
           {/* RIGHT COLUMN: PRODUCT UI PREVIEW */}
           <div
-            className={`lg:col-span-7 transition-all duration-1000 delay-300 transform w-full max-w-full overflow-hidden ${
-              isVisible
-                ? 'opacity-100 translate-y-0 translate-x-0'
-                : 'opacity-0 translate-y-12 lg:translate-y-0 lg:translate-x-12'
-            }`}
+            className="lg:col-span-7 w-full max-w-full"
             onMouseEnter={() => setIsHovered(true)}
             onMouseLeave={() => setIsHovered(false)}
           >
@@ -203,7 +169,7 @@ export function TruthSource() {
                       <div className="h-2.5 w-2.5 rounded-full bg-slate-300" />
                       <div className="h-2.5 w-2.5 rounded-full bg-slate-300" />
                     </div>
-                    <div className="ml-4 px-2 py-1 bg-white rounded-md border border-slate-200 text-xs font-medium text-slate-500 shadow-sm flex items-center gap-2 truncate">
+                    <div className="ml-4 px-2 py-1 bg-white rounded-md border border-slate-200 text-xs font-medium text-slate-500 shadow-sm flex items-center gap-2 truncate max-w-[200px] sm:max-w-none">
                       <span className="w-2 h-2 rounded-full bg-blue-500 shrink-0"></span>
                       <span className="truncate">Acme Website Redesign</span>
                     </div>
@@ -231,7 +197,7 @@ function ProductUIPreview({ activeStep }: { activeStep: number }) {
     <>
       {/* 01: Requirements */}
       <div
-        className={`absolute inset-0 p-6 transition-all duration-400 ${
+        className={`absolute inset-0 p-4 sm:p-6 transition-all duration-300 overflow-y-auto ${
           activeStep === 0
             ? 'opacity-100 translate-y-0 z-10'
             : 'opacity-0 translate-y-4 pointer-events-none z-0'
@@ -252,16 +218,16 @@ function ProductUIPreview({ activeStep }: { activeStep: number }) {
               with our new enterprise positioning. The current site feels too
               consumer-focused. Focus on creating trust and showcasing platform capabilities.
             </p>
-            <div className="mt-4 flex flex-wrap items-center gap-4 border-t border-slate-100 pt-4">
-              <div className="flex items-center gap-2 text-xs text-slate-500 bg-slate-50 px-2 py-1 rounded-md border border-slate-200">
+            <div className="mt-4 flex flex-wrap items-center gap-2 sm:gap-4 border-t border-slate-100 pt-4">
+              <div className="flex items-center gap-2 text-[10px] sm:text-xs text-slate-500 bg-slate-50 px-2 py-1 rounded-md border border-slate-200">
                 <Paperclip className="h-3 w-3" />
-                brand_guidelines_v2.pdf
+                brand_v2.pdf
               </div>
-              <div className="flex items-center gap-2 text-xs text-slate-500 bg-slate-50 px-2 py-1 rounded-md border border-slate-200">
+              <div className="flex items-center gap-2 text-[10px] sm:text-xs text-slate-500 bg-slate-50 px-2 py-1 rounded-md border border-slate-200">
                 <Paperclip className="h-3 w-3" />
-                competitor_analysis.key
+                competitor.key
               </div>
-              <div className="flex items-center gap-2 text-xs text-slate-500">
+              <div className="flex items-center gap-2 text-[10px] sm:text-xs text-slate-500 ml-auto">
                 <User className="h-3 w-3" />
                 Sarah (Client)
               </div>
@@ -283,7 +249,7 @@ function ProductUIPreview({ activeStep }: { activeStep: number }) {
 
       {/* 02: Planning */}
       <div
-        className={`absolute inset-0 p-6 transition-all duration-400 ${
+        className={`absolute inset-0 p-4 sm:p-6 transition-all duration-300 overflow-y-auto ${
           activeStep === 1
             ? 'opacity-100 translate-y-0 z-10'
             : 'opacity-0 translate-y-4 pointer-events-none z-0'
@@ -311,13 +277,13 @@ function ProductUIPreview({ activeStep }: { activeStep: number }) {
               className="flex items-center justify-between p-3 rounded-lg border border-slate-200 bg-white shadow-sm hover:border-blue-200 transition-colors"
             >
               <div className="flex items-center gap-3">
-                <div className={`h-5 w-5 rounded border ${task.status === 'TODO' ? 'border-slate-300 bg-white' : 'border-blue-500 bg-blue-50'}`} />
-                <span className="text-sm font-medium text-slate-700">
+                <div className={`h-5 w-5 rounded border shrink-0 ${task.status === 'TODO' ? 'border-slate-300 bg-white' : 'border-blue-500 bg-blue-50'}`} />
+                <span className="text-sm font-medium text-slate-700 line-clamp-1">
                   {task.t}
                 </span>
               </div>
               <div className="flex items-center gap-3 shrink-0">
-                <span className={`inline-flex items-center rounded-md px-2 py-1 text-[10px] font-bold tracking-wider ${task.color}`}>
+                <span className={`hidden sm:inline-flex items-center rounded-md px-2 py-1 text-[10px] font-bold tracking-wider ${task.color}`}>
                   {task.status}
                 </span>
                 <div className="h-6 w-6 rounded-full bg-slate-200 flex items-center justify-center text-[10px] font-bold text-slate-600 border border-white shadow-sm ring-1 ring-slate-200">
@@ -336,7 +302,7 @@ function ProductUIPreview({ activeStep }: { activeStep: number }) {
 
       {/* 03: Progress */}
       <div
-        className={`absolute inset-0 p-6 transition-all duration-400 ${
+        className={`absolute inset-0 p-4 sm:p-6 transition-all duration-300 overflow-y-auto ${
           activeStep === 2
             ? 'opacity-100 translate-y-0 z-10'
             : 'opacity-0 translate-y-4 pointer-events-none z-0'
@@ -357,17 +323,17 @@ function ProductUIPreview({ activeStep }: { activeStep: number }) {
 
         <div className="grid grid-cols-2 gap-4 mb-6">
           <div className="p-4 rounded-xl border border-slate-200 bg-white shadow-sm flex flex-col justify-center">
-            <p className="text-xs font-medium text-slate-500 uppercase tracking-wider mb-1">Completed</p>
+            <p className="text-[10px] sm:text-xs font-medium text-slate-500 uppercase tracking-wider mb-1">Completed</p>
             <div className="flex items-baseline gap-2">
-              <p className="text-2xl font-bold text-slate-900">18</p>
-              <p className="text-xs text-slate-400 font-medium">tasks</p>
+              <p className="text-xl sm:text-2xl font-bold text-slate-900">18</p>
+              <p className="text-xs text-slate-400 font-medium hidden sm:block">tasks</p>
             </div>
           </div>
           <div className="p-4 rounded-xl border border-slate-200 bg-white shadow-sm flex flex-col justify-center">
-            <p className="text-xs font-medium text-slate-500 uppercase tracking-wider mb-1">In Progress</p>
+            <p className="text-[10px] sm:text-xs font-medium text-slate-500 uppercase tracking-wider mb-1">In Progress</p>
             <div className="flex items-baseline gap-2">
-              <p className="text-2xl font-bold text-blue-600">7</p>
-              <p className="text-xs text-slate-400 font-medium">tasks</p>
+              <p className="text-xl sm:text-2xl font-bold text-blue-600">7</p>
+              <p className="text-xs text-slate-400 font-medium hidden sm:block">tasks</p>
             </div>
           </div>
         </div>
@@ -387,7 +353,7 @@ function ProductUIPreview({ activeStep }: { activeStep: number }) {
 
       {/* 04: Feedback */}
       <div
-        className={`absolute inset-0 p-6 transition-all duration-400 ${
+        className={`absolute inset-0 p-4 sm:p-6 transition-all duration-300 overflow-y-auto ${
           activeStep === 3
             ? 'opacity-100 translate-y-0 z-10'
             : 'opacity-0 translate-y-4 pointer-events-none z-0'
@@ -406,8 +372,8 @@ function ProductUIPreview({ activeStep }: { activeStep: number }) {
             </div>
             <div className="flex-1 min-w-0">
               <div className="flex items-center justify-between mb-1">
-                <span className="text-xs font-bold text-slate-900">Sarah (Client)</span>
-                <span className="text-[10px] font-medium text-slate-400">2 hours ago</span>
+                <span className="text-xs font-bold text-slate-900 truncate pr-2">Sarah (Client)</span>
+                <span className="text-[10px] font-medium text-slate-400 shrink-0">2 hours ago</span>
               </div>
               <div className="rounded-lg rounded-tl-none bg-white p-3 text-sm text-slate-700 border border-slate-200 shadow-sm leading-relaxed">
                 The new hero section looks fantastic. Can we move the pricing
@@ -423,8 +389,8 @@ function ProductUIPreview({ activeStep }: { activeStep: number }) {
             </div>
             <div className="flex-1 min-w-0">
               <div className="flex items-center justify-between mb-1">
-                <span className="text-xs font-bold text-slate-900">Product Manager</span>
-                <span className="text-[10px] font-medium text-slate-400">10 mins ago</span>
+                <span className="text-xs font-bold text-slate-900 truncate pr-2">Product Manager</span>
+                <span className="text-[10px] font-medium text-slate-400 shrink-0">10 mins ago</span>
               </div>
               <div className="rounded-lg rounded-tl-none bg-blue-50 p-3 text-sm text-blue-900 border border-blue-100 shadow-sm leading-relaxed">
                 Absolutely. I've updated the task for the engineering team.
@@ -441,61 +407,61 @@ function ProductUIPreview({ activeStep }: { activeStep: number }) {
 
       {/* 05: Approval */}
       <div
-        className={`absolute inset-0 p-6 transition-all duration-400 flex flex-col ${
+        className={`absolute inset-0 p-4 sm:p-6 transition-all duration-300 overflow-y-auto flex flex-col ${
           activeStep === 4
             ? 'opacity-100 translate-y-0 z-10'
             : 'opacity-0 translate-y-4 pointer-events-none z-0'
         }`}
       >
-        <div className="rounded-xl border border-emerald-200 bg-emerald-50/50 flex-1 flex flex-col items-center justify-center p-6 text-center shadow-sm">
-          <div className="h-16 w-16 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center mb-4 shadow-sm ring-4 ring-emerald-50">
-            <CheckCircle className="h-8 w-8" />
+        <div className="rounded-xl border border-emerald-200 bg-emerald-50/50 flex-1 flex flex-col items-center justify-start p-4 sm:p-6 text-center shadow-sm">
+          <div className="h-12 w-12 sm:h-16 sm:w-16 shrink-0 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center mb-4 shadow-sm ring-4 ring-emerald-50">
+            <CheckCircle className="h-6 w-6 sm:h-8 sm:w-8" />
           </div>
-          <h4 className="text-lg font-bold text-slate-900 mb-2">
+          <h4 className="text-base sm:text-lg font-bold text-slate-900 mb-2">
             Milestone Approved
           </h4>
-          <p className="text-sm text-slate-600 max-w-sm mb-6">
+          <p className="text-xs sm:text-sm text-slate-600 max-w-sm mb-6">
             Homepage redesign requirements and initial mockups have been approved. Engineering can proceed.
           </p>
           
-          <div className="w-full bg-white border border-emerald-100 rounded-lg p-4 text-left shadow-sm mb-6">
-            <h5 className="text-xs font-bold text-slate-900 uppercase tracking-wide mb-3">Approved Items</h5>
+          <div className="w-full bg-white border border-emerald-100 rounded-lg p-3 sm:p-4 text-left shadow-sm mb-6">
+            <h5 className="text-[10px] sm:text-xs font-bold text-slate-900 uppercase tracking-wide mb-3">Approved Items</h5>
             <div className="space-y-2">
-              <div className="flex items-center gap-2 text-sm text-slate-700">
+              <div className="flex items-center gap-2 text-xs sm:text-sm text-slate-700">
                 <CheckCircle2 className="h-4 w-4 text-emerald-500 shrink-0" />
                 <span className="truncate">Hero section layout</span>
               </div>
-              <div className="flex items-center gap-2 text-sm text-slate-700">
+              <div className="flex items-center gap-2 text-xs sm:text-sm text-slate-700">
                 <CheckCircle2 className="h-4 w-4 text-emerald-500 shrink-0" />
                 <span className="truncate">Responsive breakpoints</span>
               </div>
-              <div className="flex items-center gap-2 text-sm text-slate-700">
+              <div className="flex items-center gap-2 text-xs sm:text-sm text-slate-700">
                 <CheckCircle2 className="h-4 w-4 text-emerald-500 shrink-0" />
                 <span className="truncate">Pricing component order</span>
               </div>
             </div>
           </div>
 
-          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white border border-slate-200 text-xs font-medium text-slate-700 shadow-sm">
-            <User className="h-3 w-3 text-slate-500" />
-            Sarah (Client)
+          <div className="inline-flex items-center gap-2 px-3 py-1.5 sm:px-4 sm:py-2 rounded-full bg-white border border-slate-200 text-[10px] sm:text-xs font-medium text-slate-700 shadow-sm w-full sm:w-auto justify-center">
+            <User className="h-3 w-3 text-slate-500 shrink-0" />
+            <span className="truncate">Sarah (Client)</span>
             <span className="text-slate-300 mx-1">|</span>
-            <span className="text-slate-500 font-mono">Oct 4, 10:23 AM</span>
+            <span className="text-slate-500 font-mono shrink-0">Oct 4, 10:23 AM</span>
           </div>
         </div>
       </div>
 
       {/* 06: Delivery */}
       <div
-        className={`absolute inset-0 p-6 transition-all duration-400 flex flex-col ${
+        className={`absolute inset-0 p-4 sm:p-6 transition-all duration-300 overflow-y-auto flex flex-col ${
           activeStep === 5
             ? 'opacity-100 translate-y-0 z-10'
             : 'opacity-0 translate-y-4 pointer-events-none z-0'
         }`}
       >
-        <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm relative overflow-hidden flex-1 flex flex-col">
-          <div className="absolute top-0 right-0 p-4 opacity-5">
-            <Rocket className="h-32 w-32 text-slate-900" />
+        <div className="rounded-xl border border-slate-200 bg-white p-4 sm:p-6 shadow-sm relative overflow-hidden flex-1 flex flex-col justify-start">
+          <div className="absolute top-0 right-0 p-4 opacity-5 pointer-events-none">
+            <Rocket className="h-24 w-24 sm:h-32 sm:w-32 text-slate-900" />
           </div>
           
           <div className="relative z-10 flex-1 flex flex-col">
@@ -503,33 +469,33 @@ function ProductUIPreview({ activeStep }: { activeStep: number }) {
               <Check className="h-3 w-3" /> Delivery Ready
             </div>
             
-            <h4 className="text-2xl font-bold text-slate-900 mb-2">
+            <h4 className="text-xl sm:text-2xl font-bold text-slate-900 mb-2">
               Website Ready
             </h4>
-            <p className="text-sm text-slate-600 mb-8 max-w-sm">
+            <p className="text-xs sm:text-sm text-slate-600 mb-6 max-w-sm">
               All approved requirements have been completed. The redesign has been deployed to the production environment.
             </p>
 
-            <div className="grid grid-cols-2 gap-4 mt-auto">
-              <div className="rounded-lg border border-slate-100 bg-slate-50 p-4">
-                <div className="flex items-center gap-2 text-slate-700 font-semibold text-sm mb-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-auto">
+              <div className="rounded-lg border border-slate-100 bg-slate-50 p-3 sm:p-4">
+                <div className="flex items-center gap-2 text-slate-700 font-semibold text-xs sm:text-sm mb-3">
                   <Layers className="h-4 w-4 text-blue-500" /> Deliverables
                 </div>
-                <ul className="space-y-2 text-xs text-slate-600">
+                <ul className="space-y-2 text-[10px] sm:text-xs text-slate-600">
                   <li className="flex items-center gap-2"><CheckCircle2 className="h-3 w-3 text-emerald-500" /> Homepage</li>
                   <li className="flex items-center gap-2"><CheckCircle2 className="h-3 w-3 text-emerald-500" /> Mobile layout</li>
                   <li className="flex items-center gap-2"><CheckCircle2 className="h-3 w-3 text-emerald-500" /> CMS schema</li>
                 </ul>
               </div>
 
-              <div className="rounded-lg border border-slate-100 bg-slate-50 p-4">
-                <div className="flex items-center gap-2 text-slate-700 font-semibold text-sm mb-3">
+              <div className="rounded-lg border border-slate-100 bg-slate-50 p-3 sm:p-4">
+                <div className="flex items-center gap-2 text-slate-700 font-semibold text-xs sm:text-sm mb-3">
                   <Box className="h-4 w-4 text-fuchsia-500" /> Status
                 </div>
                 <div className="space-y-3">
                   <div>
                     <p className="text-[10px] font-bold text-slate-400 uppercase mb-1">Progress</p>
-                    <p className="text-lg font-bold text-emerald-600">100%</p>
+                    <p className="text-base sm:text-lg font-bold text-emerald-600">100%</p>
                   </div>
                   <div>
                     <p className="text-[10px] font-bold text-slate-400 uppercase mb-1">Deployment</p>
